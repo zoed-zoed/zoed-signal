@@ -30,6 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 .tmp-start-*.log
+.tmp-supabase-start-*.log
 
 # local assistant files
 AGENTS.md
@@ -37,6 +38,7 @@ CLAUDE.md
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

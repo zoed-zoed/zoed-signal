@@ -8,14 +8,24 @@ type Params = {
 };
 
 export async function PUT(request: Request, { params }: Params) {
-  const { id } = await params;
-  const payload = (await request.json()) as NewsItem;
-  const item = await saveNewsItem({ ...payload, id });
-  return NextResponse.json(item);
+  try {
+    const { id } = await params;
+    const payload = (await request.json()) as NewsItem;
+    const item = await saveNewsItem({ ...payload, id });
+    return NextResponse.json(item);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "更新新闻时发生未知错误。";
+    return NextResponse.json({ message }, { status: 500 });
+  }
 }
 
 export async function DELETE(_: Request, { params }: Params) {
-  const { id } = await params;
-  await deleteNewsItem(id);
-  return NextResponse.json({ ok: true });
+  try {
+    const { id } = await params;
+    await deleteNewsItem(id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "删除新闻时发生未知错误。";
+    return NextResponse.json({ message }, { status: 500 });
+  }
 }
