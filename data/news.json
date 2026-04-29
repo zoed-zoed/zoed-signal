@@ -1,0 +1,132 @@
+[
+  {
+    "id": "news-2",
+    "briefId": "vol-1",
+    "title": "某芯片公司公布数据中心业务增长",
+    "sourceName": "Earnings Report / Investor Relations",
+    "sourceUrl": "https://example.com/datacenter-growth",
+    "publishedAt": "2026-04-27",
+    "category": "硬件与算力",
+    "importance": "必看",
+    "whatHappened": "该公司财报显示，数据中心相关收入继续增长，主要受到 AI 训练和推理需求推动。",
+    "whyImportant": "AI 产业的发展不只发生在应用层，也高度依赖算力、芯片和云基础设施。",
+    "relevanceToBusinessStudents": "这条新闻能帮你建立产业链视角，理解为什么上游资源会决定下游产品节奏和成本结构。",
+    "interviewOrCaseUse": "可以作为分析 AI 产业链上游价值分布的案例，用于商赛或行业研究。",
+    "nextAction": "阅读这家公司的财报摘要，关注数据中心收入占比和管理层表述。",
+    "tags": [
+      "芯片",
+      "数据中心",
+      "AI算力",
+      "财报分析"
+    ],
+    "savedType": [
+      "interview"
+    ]
+  },
+  {
+    "id": "news-3",
+    "briefId": "vol-1",
+    "title": "某科技公司调整 AI 订阅定价",
+    "sourceName": "Tech Media",
+    "sourceUrl": "https://example.com/ai-pricing-update",
+    "publishedAt": "2026-04-27",
+    "category": "商业化 / 融资",
+    "importance": "可扫",
+    "whatHappened": "该公司调整 AI 产品订阅价格，并增加面向团队和企业用户的套餐。",
+    "whyImportant": "AI 产品正在从流量增长阶段进入更明确的商业化阶段，定价就是产品定位的一部分。",
+    "relevanceToBusinessStudents": "很适合用来理解用户分层、商业模式设计和 SaaS 定价思路。",
+    "interviewOrCaseUse": "可作为“AI 产品如何设计商业模式和定价策略”的分析案例。",
+    "nextAction": "对比几个 AI 工具的定价页面，整理它们的用户分层方式。",
+    "tags": [
+      "订阅制",
+      "商业化",
+      "B2B",
+      "定价策略"
+    ],
+    "savedType": []
+  },
+  {
+    "id": "news-4",
+    "briefId": "vol-2",
+    "title": "某云服务商推出新的推理算力套餐",
+    "sourceName": "Official Product Update",
+    "sourceUrl": "https://example.com/inference-cloud",
+    "publishedAt": "2026-04-24",
+    "category": "硬件与算力",
+    "importance": "必看",
+    "whatHappened": "该云厂商针对企业客户推出更灵活的推理算力套餐，按实际负载计费。",
+    "whyImportant": "推理成本下降会直接影响 AI 应用的商业可行性，尤其是 B 端产品能否大规模推广。",
+    "relevanceToBusinessStudents": "你可以借这条新闻理解技术成本如何反向塑造商业模式。",
+    "interviewOrCaseUse": "适合回答 AI 产品如何控制成本、提升单位经济模型。",
+    "nextAction": "观察哪些 AI 产品在近期开始强调更低成本或更高部署效率。",
+    "tags": [
+      "推理",
+      "云服务",
+      "单位经济模型"
+    ],
+    "savedType": []
+  },
+  {
+    "id": "news-5",
+    "briefId": "vol-2",
+    "title": "监管机构发布 AI 生成内容合规新指引",
+    "sourceName": "Policy Release",
+    "sourceUrl": "https://example.com/ai-policy-guideline",
+    "publishedAt": "2026-04-24",
+    "category": "政策与监管",
+    "importance": "可扫",
+    "whatHappened": "监管机构发布关于 AI 生成内容标识、数据使用和平台责任的新指引。",
+    "whyImportant": "合规要求会直接影响平台设计、审核流程和商业化边界。",
+    "relevanceToBusinessStudents": "如果你关注产品、运营或平台治理，这类政策能帮你建立风险意识。",
+    "interviewOrCaseUse": "可用于讨论平台责任、内容审核和技术创新之间的平衡。",
+    "nextAction": "摘出其中两条最可能影响产品设计的要求，写进自己的行业观察笔记。",
+    "tags": [
+      "监管",
+      "内容治理",
+      "平台责任"
+    ],
+    "savedType": []
+  },
+  {
+    "id": "news-6",
+    "briefId": "vol-3",
+    "title": "某大厂招聘 AI 应用产品运营实习生",
+    "sourceName": "Recruitment Page",
+    "sourceUrl": "https://example.com/ai-ops-intern",
+    "publishedAt": "2026-04-20",
+    "category": "求职相关",
+    "importance": "必看",
+    "whatHappened": "该公司在招聘页面中强调 AI 产品运营实习生需要理解业务场景、协同算法团队并负责用户反馈闭环。",
+    "whyImportant": "这类 JD 能帮助你看到真实岗位需要的能力，不再只停留在抽象的“想转 AI”。",
+    "relevanceToBusinessStudents": "对非技术背景同学来说，这是最直接的岗位画像参考。",
+    "interviewOrCaseUse": "可用于面试时说明你如何理解 AI 应用落地岗位的职责和协作方式。",
+    "nextAction": "把 JD 里的能力要求拆成三类：你已有的、可以补的、需要作品证明的。",
+    "tags": [
+      "JD分析",
+      "AI运营",
+      "岗位理解"
+    ],
+    "savedType": []
+  },
+  {
+    "id": "news-7",
+    "briefId": "vol-3",
+    "title": "某消费电子品牌分享 AI 功能上线后的用户学习成本数据",
+    "sourceName": "Design Conference Talk",
+    "sourceUrl": "https://example.com/ai-feature-learning-curve",
+    "publishedAt": "2026-04-20",
+    "category": "大厂战略",
+    "importance": "可扫",
+    "whatHappened": "该品牌在产品设计分享中提到，AI 功能上线后最大的挑战不是模型能力，而是用户是否理解和愿意持续使用。",
+    "whyImportant": "AI 产品成败常常卡在体验教育、预期管理和场景切入，而不只是技术炫技。",
+    "relevanceToBusinessStudents": "这能帮你建立更成熟的产品视角：用户 adoption 也是商业问题。",
+    "interviewOrCaseUse": "可作为“AI 功能为什么不一定一上线就成功”的用户体验案例。",
+    "nextAction": "记录一个你见过的 AI 功能，思考它失败或成功是不是因为用户教育做得好。",
+    "tags": [
+      "产品设计",
+      "用户教育",
+      "adoption"
+    ],
+    "savedType": []
+  }
+]
