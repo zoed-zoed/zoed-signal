@@ -1,5 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache";
 
+import { sanitizeBookmarkRecord } from "@/lib/content/validation";
+import { filterValidItems, logDataWarning } from "@/lib/data/guards";
+import { getDataSourceMode } from "@/lib/data/source-mode";
 import { getNewsById, setNewsItemSavedTypes } from "@/lib/data/news";
 import { readJsonFile, writeJsonFile } from "@/lib/storage/file-db";
 import { bookmarkFromRow, bookmarkToRow, type BookmarkRow } from "@/lib/supabase/mappers";
@@ -8,25 +11,29 @@ import type { Bookmark, SavedType } from "@/types/news";
 
 export async function getBookmarks(): Promise<Bookmark[]> {
   noStore();
-  const supabase = getSupabaseServerClient();
 
-  if (supabase) {
+  if (getDataSourceMode() === "supabase") {
+    const supabase = getRequiredSupabaseClient();
     const { data, error } = await supabase.from("bookmarks").select("*").order("created_at", { ascending: false });
 
     if (error) {
-      throw new Error(`读取 Supabase 收藏失败：${error.message}`);
+      throw new Error(`Failed to read bookmarks from Supabase: ${error.message}`);
     }
 
-    return (data as BookmarkRow[]).map(bookmarkFromRow);
+    return filterValidItems(
+      "bookmarks",
+      ((data ?? []) as BookmarkRow[]).map(bookmarkFromRow),
+      sanitizeBookmarkRecord,
+    );
   }
 
-  return readJsonFile<Bookmark[]>("bookmarks.json");
+  const items = await readJsonFile<unknown>("bookmarks.json");
+  return filterValidItems("bookmarks", Array.isArray(items) ? items : [], sanitizeBookmarkRecord);
 }
 
 export async function addBookmark(newsId: string, bucket: SavedType): Promise<Bookmark[]> {
-  const supabase = getSupabaseServerClient();
-
-  if (supabase) {
+  if (getDataSourceMode() === "supabase") {
+    const supabase = getRequiredSupabaseClient();
     const { error } = await supabase.from("bookmarks").upsert(
       bookmarkToRow({
         newsId,
@@ -37,7 +44,7 @@ export async function addBookmark(newsId: string, bucket: SavedType): Promise<Bo
     );
 
     if (error) {
-      throw new Error(`保存 Supabase 收藏失败：${error.message}`);
+      throw new Error(`Failed to save bookmark to Supabase: ${error.message}`);
     }
 
     const next = await getBookmarks();
@@ -58,13 +65,12 @@ export async function addBookmark(newsId: string, bucket: SavedType): Promise<Bo
 }
 
 export async function removeBookmark(newsId: string, bucket: SavedType): Promise<Bookmark[]> {
-  const supabase = getSupabaseServerClient();
-
-  if (supabase) {
+  if (getDataSourceMode() === "supabase") {
+    const supabase = getRequiredSupabaseClient();
     const { error } = await supabase.from("bookmarks").delete().eq("news_id", newsId).eq("bucket", bucket);
 
     if (error) {
-      throw new Error(`删除 Supabase 收藏失败：${error.message}`);
+      throw new Error(`Failed to delete bookmark from Supabase: ${error.message}`);
     }
 
     const next = await getBookmarks();
@@ -82,12 +88,19 @@ export async function removeBookmark(newsId: string, bucket: SavedType): Promise
 async function syncNewsSavedTypes(newsId: string, bookmarks: Bookmark[]) {
   const newsItem = await getNewsById(newsId);
   if (!newsItem) {
+    logDataWarning("bookmarks", `Skipped savedType sync because news item ${newsId} does not exist`);
     return;
   }
 
-  const savedTypes = bookmarks
-    .filter((item) => item.newsId === newsId)
-    .map((item) => item.bucket);
+  const savedTypes = bookmarks.filter((item) => item.newsId === newsId).map((item) => item.bucket);
 
   await setNewsItemSavedTypes(newsId, savedTypes);
+}
+
+function getRequiredSupabaseClient() {
+  const supabase = getSupabaseServerClient();
+  if (!supabase) {
+    throw new Error("Supabase client is unavailable.");
+  }
+  return supabase;
 }

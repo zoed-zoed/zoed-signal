@@ -1,26 +1,35 @@
 import { NextResponse } from "next/server";
 
 import { removeBookmark } from "@/lib/data/bookmarks";
-import type { SavedType } from "@/types/news";
+import { getNewsById } from "@/lib/data/news";
+import { type SavedType } from "@/types/news";
 
 type Params = {
   params: Promise<{ newsId: string }>;
 };
 
+const allowedBuckets = new Set<SavedType>(["interview", "case", "content", "research"]);
+
 export async function DELETE(request: Request, { params }: Params) {
   try {
     const { newsId } = await params;
-    const { searchParams } = new URL(request.url);
-    const bucket = searchParams.get("bucket") as SavedType | null;
+    const newsItem = await getNewsById(newsId);
 
-    if (!bucket) {
-      return NextResponse.json({ message: "缺少 bucket 参数。" }, { status: 400 });
+    if (!newsItem) {
+      return NextResponse.json({ message: "News item not found." }, { status: 404 });
     }
 
-    const items = await removeBookmark(newsId, bucket);
+    const { searchParams } = new URL(request.url);
+    const bucket = searchParams.get("bucket");
+
+    if (!bucket || !allowedBuckets.has(bucket as SavedType)) {
+      return NextResponse.json({ message: "bucket is missing or invalid." }, { status: 400 });
+    }
+
+    const items = await removeBookmark(newsId, bucket as SavedType);
     return NextResponse.json(items);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "删除收藏时发生未知错误。";
+    const message = error instanceof Error ? error.message : "Failed to delete bookmark.";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

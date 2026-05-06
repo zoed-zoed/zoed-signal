@@ -1,5 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache";
 
+import { sanitizeBriefRecord } from "@/lib/content/validation";
+import { filterValidItems } from "@/lib/data/guards";
+import { getDataSourceMode } from "@/lib/data/source-mode";
 import { readJsonFile, writeJsonFile } from "@/lib/storage/file-db";
 import { briefFromRow, briefToRow, type BriefRow } from "@/lib/supabase/mappers";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -7,20 +10,22 @@ import type { Brief } from "@/types/brief";
 
 export async function getBriefs(): Promise<Brief[]> {
   noStore();
-  const supabase = getSupabaseServerClient();
 
-  if (supabase) {
+  if (getDataSourceMode() === "supabase") {
+    const supabase = getRequiredSupabaseClient();
     const { data, error } = await supabase.from("briefs").select("*").order("date", { ascending: false });
 
     if (error) {
-      throw new Error(`读取 Supabase 简报失败：${error.message}`);
+      throw new Error(`Failed to read briefs from Supabase: ${error.message}`);
     }
 
-    return (data as BriefRow[]).map(briefFromRow);
+    return filterValidItems("briefs", ((data ?? []) as BriefRow[]).map(briefFromRow), sanitizeBriefRecord);
   }
 
-  const briefs = await readJsonFile<Brief[]>("briefs.json");
-  return briefs.toSorted((a, b) => b.date.localeCompare(a.date));
+  const briefs = await readJsonFile<unknown>("briefs.json");
+  return filterValidItems("briefs", Array.isArray(briefs) ? briefs : [], sanitizeBriefRecord).toSorted((a, b) =>
+    b.date.localeCompare(a.date),
+  );
 }
 
 export async function getBriefById(id: string): Promise<Brief | undefined> {
@@ -29,9 +34,8 @@ export async function getBriefById(id: string): Promise<Brief | undefined> {
 }
 
 export async function saveBrief(brief: Brief): Promise<Brief> {
-  const supabase = getSupabaseServerClient();
-
-  if (supabase) {
+  if (getDataSourceMode() === "supabase") {
+    const supabase = getRequiredSupabaseClient();
     const { data, error } = await supabase
       .from("briefs")
       .upsert(briefToRow(brief), { onConflict: "id" })
@@ -39,30 +43,27 @@ export async function saveBrief(brief: Brief): Promise<Brief> {
       .single();
 
     if (error) {
-      throw new Error(`保存 Supabase 简报失败：${error.message}`);
+      throw new Error(`Failed to save brief to Supabase: ${error.message}`);
     }
 
-    return briefFromRow(data as BriefRow);
+    return sanitizeBriefRecord(briefFromRow(data as BriefRow)) ?? brief;
   }
 
   const briefs = await getBriefs();
   const exists = briefs.some((entry) => entry.id === brief.id);
-  const nextBriefs = exists
-    ? briefs.map((entry) => (entry.id === brief.id ? brief : entry))
-    : [brief, ...briefs];
+  const nextBriefs = exists ? briefs.map((entry) => (entry.id === brief.id ? brief : entry)) : [brief, ...briefs];
 
   await writeJsonFile("briefs.json", nextBriefs);
   return brief;
 }
 
 export async function deleteBrief(id: string): Promise<void> {
-  const supabase = getSupabaseServerClient();
-
-  if (supabase) {
+  if (getDataSourceMode() === "supabase") {
+    const supabase = getRequiredSupabaseClient();
     const { error } = await supabase.from("briefs").delete().eq("id", id);
 
     if (error) {
-      throw new Error(`删除 Supabase 简报失败：${error.message}`);
+      throw new Error(`Failed to delete brief from Supabase: ${error.message}`);
     }
 
     return;
@@ -73,4 +74,12 @@ export async function deleteBrief(id: string): Promise<void> {
     "briefs.json",
     briefs.filter((brief) => brief.id !== id),
   );
+}
+
+function getRequiredSupabaseClient() {
+  const supabase = getSupabaseServerClient();
+  if (!supabase) {
+    throw new Error("Supabase client is unavailable.");
+  }
+  return supabase;
 }

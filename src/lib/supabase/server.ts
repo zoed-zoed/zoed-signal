@@ -16,7 +16,7 @@ export function getSupabaseServerClient() {
   if (!url || !serviceRoleKey) {
     if ((url || serviceRoleKey) && !didWarnAboutPartialConfig) {
       console.warn(
-        "Supabase 环境变量没有配完整，当前会继续回退到本地 JSON。请同时提供 NEXT_PUBLIC_SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY。",
+        "Supabase environment variables are partially configured. Provide both NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
       );
       didWarnAboutPartialConfig = true;
     }
