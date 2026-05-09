@@ -5,8 +5,10 @@ import { useMemo, useState, useTransition } from "react";
 
 import type { Brief } from "@/types/brief";
 import {
+  CURATION_STAGE_OPTIONS,
   IMPORTANCE_OPTIONS,
   NEWS_CATEGORY_OPTIONS,
+  type CurationStage,
   type Importance,
   type NewsCategory,
   type NewsItem,
@@ -25,6 +27,7 @@ type FormState = {
   publishedAt: string;
   category: NewsCategory;
   importance: Importance;
+  curationStage: CurationStage;
   whatHappened: string;
   whyImportant: string;
   relevanceToBusinessStudents: string;
@@ -45,8 +48,9 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
       sourceName: initialData?.sourceName ?? "",
       sourceUrl: initialData?.sourceUrl ?? "",
       publishedAt: initialData?.publishedAt ?? new Date().toISOString().slice(0, 10),
-      category: initialData?.category ?? "AI 产品更新",
-      importance: initialData?.importance ?? "必看",
+      category: initialData?.category ?? NEWS_CATEGORY_OPTIONS[0],
+      importance: initialData?.importance ?? IMPORTANCE_OPTIONS[0],
+      curationStage: initialData?.curationStage ?? "published",
       whatHappened: initialData?.whatHappened ?? "",
       whyImportant: initialData?.whyImportant ?? "",
       relevanceToBusinessStudents: initialData?.relevanceToBusinessStudents ?? "",
@@ -68,7 +72,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
       setError("");
 
       if (!briefs.length) {
-        setError("请先去后台新增一期简报，再录入新闻。");
+        setError("请先创建一期简报，再录入新闻。");
         return;
       }
 
@@ -81,6 +85,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         publishedAt: form.publishedAt,
         category: form.category,
         importance: form.importance,
+        curationStage: form.curationStage,
         whatHappened: form.whatHappened,
         whyImportant: form.whyImportant,
         relevanceToBusinessStudents: form.relevanceToBusinessStudents,
@@ -130,8 +135,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
     <div className="space-y-6">
       {!briefs.length ? (
         <div className="rounded-[24px] border border-[rgba(202,93,52,0.2)] bg-[var(--accent-soft)] p-5 text-sm leading-7 text-[var(--accent-strong)]">
-          你现在还没有创建任何简报。先去后台新增一期简报，新闻才能正确归档到 `Vol.1 / Vol.2 / Vol.3`
-          这类期数里。
+          你现在还没有创建任何简报。先去后台新建一期简报，新闻才能正确归档。
         </div>
       ) : null}
 
@@ -160,11 +164,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
       </div>
 
       <Field label="新闻标题">
-        <input
-          value={form.title}
-          onChange={(event) => update("title", event.target.value)}
-          className={inputClassName}
-        />
+        <input value={form.title} onChange={(event) => update("title", event.target.value)} className={inputClassName} />
       </Field>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -213,7 +213,21 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         </Field>
       </div>
 
-      <Field label="发生了什么">
+      <Field label="展示状态">
+        <select
+          value={form.curationStage}
+          onChange={(event) => update("curationStage", event.target.value as CurationStage)}
+          className={inputClassName}
+        >
+          {CURATION_STAGE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option === "published" ? "适合展示给用户" : "候选内容，先别公开"}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="原始事件">
         <textarea
           rows={4}
           value={form.whatHappened}
@@ -222,7 +236,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         />
       </Field>
 
-      <Field label="为什么重要">
+      <Field label="核心摘要">
         <textarea
           rows={4}
           value={form.whyImportant}
@@ -231,7 +245,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         />
       </Field>
 
-      <Field label="和商科生的关系">
+      <Field label="对用户的价值">
         <textarea
           rows={4}
           value={form.relevanceToBusinessStudents}
@@ -240,7 +254,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         />
       </Field>
 
-      <Field label="可以怎么用于面试 / 商赛">
+      <Field label="商业解读 / 面试案例角度">
         <textarea
           rows={4}
           value={form.interviewOrCaseUse}
@@ -249,7 +263,7 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         />
       </Field>
 
-      <Field label="下一步行动建议">
+      <Field label="内部占位字段：下一步建议">
         <textarea
           rows={3}
           value={form.nextAction}
@@ -258,12 +272,8 @@ export function NewsEditorForm({ briefs, initialData }: NewsEditorFormProps) {
         />
       </Field>
 
-      <Field label="关键词标签（用中文逗号或英文逗号分隔）">
-        <input
-          value={form.tags}
-          onChange={(event) => update("tags", event.target.value)}
-          className={inputClassName}
-        />
+      <Field label="关键词标签（中文逗号或英文逗号分隔）">
+        <input value={form.tags} onChange={(event) => update("tags", event.target.value)} className={inputClassName} />
       </Field>
 
       {error ? <p className="text-sm text-[var(--accent-strong)]">{error}</p> : null}

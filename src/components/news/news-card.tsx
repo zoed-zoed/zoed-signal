@@ -1,6 +1,6 @@
 import { BookmarkControls } from "@/components/news/bookmark-controls";
 import { formatDate } from "@/lib/utils/format";
-import type { NewsItem } from "@/types/news";
+import { IMPORTANCE_OPTIONS, type NewsItem } from "@/types/news";
 
 type NewsCardProps = {
   item: NewsItem;
@@ -12,7 +12,7 @@ export function NewsCard({ item }: NewsCardProps) {
       <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-5 md:flex-row md:items-start md:justify-between">
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <span className={`chip ${item.importance === "必看" ? "importance-must" : "importance-scan"}`}>
+            <span className={`chip ${item.importance === IMPORTANCE_OPTIONS[0] ? "importance-must" : "importance-scan"}`}>
               {item.importance}
             </span>
             <span className="chip">{item.category}</span>
@@ -36,17 +36,16 @@ export function NewsCard({ item }: NewsCardProps) {
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <InfoBlock title="发生了什么" content={item.whatHappened} />
-        <InfoBlock title="为什么重要" content={item.whyImportant} />
-        <InfoBlock title="和商科生的关系" content={item.relevanceToBusinessStudents} />
-        <InfoBlock title="可以怎么用于面试 / 商赛" content={item.interviewOrCaseUse} />
+        <InfoBlock title="原始事件" content={item.whatHappened} />
+        <InfoBlock title="核心摘要" content={item.whyImportant} />
+        <InfoBlock title="商业解读" content={item.interviewOrCaseUse} />
+        <InfoBlock title="对用户的价值" content={item.relevanceToBusinessStudents} />
       </div>
 
       <div className="mt-6 grid gap-6 border-t border-[var(--line)] pt-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div>
-          <p className="text-sm font-medium text-[var(--foreground)]">下一步行动建议</p>
-          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{item.nextAction}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <p className="text-sm font-medium text-[var(--foreground)]">标签</p>
+          <div className="mt-3 flex flex-wrap gap-2">
             {item.tags.map((tag) => (
               <span className="chip" key={tag}>
                 #{tag}

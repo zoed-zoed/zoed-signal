@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BriefCard } from "@/components/brief/brief-card";
 import { SiteShell } from "@/components/layout/site-shell";
+import { SupabaseConnectionCheck } from "@/components/news/supabase-connection-check";
 import { getBriefs } from "@/lib/data/briefs";
 import { getNewsItems } from "@/lib/data/news";
 
@@ -12,16 +13,18 @@ type HomePageProps = {
 };
 
 export default async function Home({ searchParams }: HomePageProps) {
-  const [briefs, items] = await Promise.all([getBriefs(), getNewsItems()]);
+  const [briefs, items] = await Promise.all([getBriefs(), getNewsItems({ onlyPublished: true })]);
   const params = (await searchParams) ?? {};
   const sortOrder = params.order === "asc" ? "asc" : "desc";
-  const latestBrief = briefs[0];
-  const displayBriefs = sortOrder === "asc" ? [...briefs].reverse() : briefs;
   const newsCountByBrief = new Map<string, number>();
 
   for (const item of items) {
     newsCountByBrief.set(item.briefId, (newsCountByBrief.get(item.briefId) ?? 0) + 1);
   }
+
+  const visibleBriefs = briefs.filter((brief) => (newsCountByBrief.get(brief.id) ?? 0) > 0);
+  const latestBrief = visibleBriefs[0];
+  const displayBriefs = sortOrder === "asc" ? [...visibleBriefs].reverse() : visibleBriefs;
 
   return (
     <SiteShell>
@@ -139,6 +142,8 @@ export default async function Home({ searchParams }: HomePageProps) {
         </div>
 
         <aside className="space-y-5">
+          <SupabaseConnectionCheck />
+
           <article className="glass-panel rounded-[30px] p-6">
             <p className="section-label">Why this product</p>
             <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--charcoal)]">

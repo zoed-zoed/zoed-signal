@@ -8,12 +8,18 @@ import { newsItemFromRow, newsItemToRow, type NewsItemRow } from "@/lib/supabase
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { NewsItem } from "@/types/news";
 
-export async function getNewsItems(): Promise<NewsItem[]> {
+export async function getNewsItems(options?: { onlyPublished?: boolean }): Promise<NewsItem[]> {
   noStore();
 
   if (getDataSourceMode() === "supabase") {
     const supabase = getRequiredSupabaseClient();
-    const { data, error } = await supabase.from("news_items").select("*").order("published_at", { ascending: false });
+    let query = supabase.from("news_items").select("*").order("published_at", { ascending: false });
+
+    if (options?.onlyPublished) {
+      query = query.eq("curation_stage", "published");
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error(`Failed to read news items from Supabase: ${error.message}`);
@@ -23,9 +29,9 @@ export async function getNewsItems(): Promise<NewsItem[]> {
   }
 
   const items = await readJsonFile<unknown>("news.json");
-  return filterValidItems("news", Array.isArray(items) ? items : [], sanitizeNewsItemRecord).toSorted((a, b) =>
-    b.publishedAt.localeCompare(a.publishedAt),
-  );
+  return filterValidItems("news", Array.isArray(items) ? items : [], sanitizeNewsItemRecord)
+    .filter((item) => (options?.onlyPublished ? item.curationStage === "published" : true))
+    .toSorted((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
 export async function getNewsById(id: string): Promise<NewsItem | undefined> {
@@ -34,6 +40,11 @@ export async function getNewsById(id: string): Promise<NewsItem | undefined> {
 }
 
 export async function getNewsForBrief(briefId: string): Promise<NewsItem[]> {
+  const items = await getNewsItems({ onlyPublished: true });
+  return items.filter((item) => item.briefId === briefId);
+}
+
+export async function getAllNewsForBrief(briefId: string): Promise<NewsItem[]> {
   const items = await getNewsItems();
   return items.filter((item) => item.briefId === briefId);
 }

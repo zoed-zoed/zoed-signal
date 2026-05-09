@@ -14,6 +14,10 @@ export const IMPORTANCE_OPTIONS = ["必看", "可扫"] as const;
 
 export type Importance = (typeof IMPORTANCE_OPTIONS)[number];
 
+export const CURATION_STAGE_OPTIONS = ["candidate", "published"] as const;
+
+export type CurationStage = (typeof CURATION_STAGE_OPTIONS)[number];
+
 export type SavedType = "interview" | "case" | "content" | "research";
 
 export type NewsItem = {
@@ -32,6 +36,7 @@ export type NewsItem = {
   nextAction: string;
   tags: string[];
   savedType: SavedType[];
+  curationStage: CurationStage;
 };
 
 export type Bookmark = {

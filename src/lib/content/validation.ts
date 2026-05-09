@@ -1,8 +1,10 @@
 import type { Brief } from "@/types/brief";
 import {
+  CURATION_STAGE_OPTIONS,
   IMPORTANCE_OPTIONS,
   NEWS_CATEGORY_OPTIONS,
   type Bookmark,
+  type CurationStage,
   type Importance,
   type NewsCategory,
   type NewsItem,
@@ -13,6 +15,7 @@ const savedTypeOptions = ["interview", "case", "content", "research"] as const;
 
 const newsCategorySet = new Set<string>(NEWS_CATEGORY_OPTIONS);
 const importanceSet = new Set<string>(IMPORTANCE_OPTIONS);
+const curationStageSet = new Set<string>(CURATION_STAGE_OPTIONS);
 const savedTypeSet = new Set<string>(savedTypeOptions);
 
 type ValidationMode = "input" | "storage";
@@ -167,6 +170,7 @@ export function validateNewsItemInput(input: unknown, options?: { id?: string })
     nextAction: getText(input.nextAction, { field: "nextAction", maxLength: 300 }, "input"),
     tags: getStringArray(input.tags, "tags", 8),
     savedType: getSavedTypes(input.savedType),
+    curationStage: getEnum<CurationStage>(input.curationStage, "curationStage", curationStageSet, "published"),
   };
 }
 

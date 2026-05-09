@@ -1,5 +1,5 @@
 import type { Brief } from "@/types/brief";
-import type { Bookmark, NewsItem, SavedType } from "@/types/news";
+import type { Bookmark, CurationStage, NewsItem, SavedType } from "@/types/news";
 
 export type BriefRow = {
   id: string;
@@ -30,6 +30,7 @@ export type NewsItemRow = {
   next_action: string;
   tags: string[] | null;
   saved_type: SavedType[] | null;
+  curation_stage: CurationStage | null;
 };
 
 export type BookmarkRow = {
@@ -89,6 +90,7 @@ export function newsItemFromRow(row: NewsItemRow): NewsItem {
     nextAction: row.next_action,
     tags: normalizeArray(row.tags),
     savedType: normalizeArray(row.saved_type),
+    curationStage: row.curation_stage ?? "published",
   };
 }
 
@@ -109,6 +111,7 @@ export function newsItemToRow(item: NewsItem): NewsItemRow {
     next_action: item.nextAction,
     tags: normalizeArray(item.tags),
     saved_type: normalizeArray(item.savedType),
+    curation_stage: item.curationStage,
   };
 }
 

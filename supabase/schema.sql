@@ -39,9 +39,11 @@ create table if not exists public.news_items (
   next_action text not null,
   tags text[] not null default '{}',
   saved_type text[] not null default '{}',
+  curation_stage text not null default 'published',
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
-  constraint news_items_importance_check check (importance in ('必看', '可扫'))
+  constraint news_items_importance_check check (importance in ('必看', '可扫')),
+  constraint news_items_curation_stage_check check (curation_stage in ('candidate', 'published'))
 );
 
 create table if not exists public.bookmarks (

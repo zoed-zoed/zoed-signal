@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AiHotImportPanel } from "@/components/admin/aihot-import-panel";
 import { SiteShell } from "@/components/layout/site-shell";
 import { getBriefs } from "@/lib/data/briefs";
 import { getNewsItems } from "@/lib/data/news";
@@ -11,6 +12,7 @@ type AdminPageProps = {
     briefId?: string;
     category?: string;
     importance?: string;
+    stage?: string;
   }>;
 };
 
@@ -32,6 +34,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       return false;
     }
     if (filters.importance && item.importance !== filters.importance) {
+      return false;
+    }
+    if (filters.stage && item.curationStage !== filters.stage) {
       return false;
     }
     return true;
@@ -69,7 +74,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </article>
 
-        <article className="glass-panel rounded-[36px] p-7 md:p-9">
+        <AiHotImportPanel />
+      </section>
+
+      <section className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <article className="glass-panel rounded-[36px] p-7 md:p-9 lg:col-start-2">
           <p className="section-label">Current briefs</p>
           <div className="mt-4 space-y-4">
             {briefs.map((brief) => (
@@ -104,7 +113,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <p className="text-sm text-[var(--muted)]">点击编辑，可以直接修改卡片内容和字段。当前显示 {filteredItems.length} 条。</p>
         </div>
 
-        <form className="mb-5 grid gap-3 rounded-[24px] border border-[var(--line)] bg-white/70 p-4 md:grid-cols-[1fr_1fr_1fr_auto_auto]">
+        <form className="mb-5 grid gap-3 rounded-[24px] border border-[var(--line)] bg-white/70 p-4 md:grid-cols-[1fr_1fr_1fr_1fr_auto_auto]">
           <select
             name="briefId"
             defaultValue={filters.briefId ?? ""}
@@ -144,6 +153,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ))}
           </select>
 
+          <select
+            name="stage"
+            defaultValue={filters.stage ?? ""}
+            className="min-h-11 rounded-[18px] border border-[var(--line)] bg-white px-4 py-2 text-sm text-[var(--foreground)] outline-none"
+          >
+            <option value="">全部状态</option>
+            <option value="published">适合展示给用户</option>
+            <option value="candidate">候选内容</option>
+          </select>
+
           <button
             type="submit"
             className="rounded-full bg-[var(--charcoal)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-black"
@@ -170,6 +189,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </span>
                     <span className="chip">{item.category}</span>
                     <span className="chip">{briefMap.get(item.briefId)}</span>
+                    <span className="chip">{item.curationStage === "published" ? "公开展示" : "候选暂存"}</span>
                   </div>
                   <h3 className="text-xl font-semibold tracking-tight">{item.title}</h3>
                   <p className="text-sm leading-7 text-[var(--muted)]">{item.whatHappened}</p>

@@ -9,7 +9,7 @@ import type { SavedType } from "@/types/news";
 const buckets: SavedType[] = ["interview", "case", "content", "research"];
 
 export default async function LibraryPage() {
-  const [bookmarks, items] = await Promise.all([getBookmarks(), getNewsItems()]);
+  const [bookmarks, items] = await Promise.all([getBookmarks(), getNewsItems({ onlyPublished: true })]);
   const itemMap = new Map(items.map((item) => [item.id, item]));
 
   return (
