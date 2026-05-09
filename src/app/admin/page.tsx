@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AiHotImportPanel } from "@/components/admin/aihot-import-panel";
 import { SiteShell } from "@/components/layout/site-shell";
+import { SupabaseConnectionCheck } from "@/components/news/supabase-connection-check";
 import { getBriefs } from "@/lib/data/briefs";
 import { getNewsItems } from "@/lib/data/news";
 import { formatDate } from "@/lib/utils/format";
@@ -78,6 +79,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       </section>
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="lg:col-start-1">
+          <SupabaseConnectionCheck />
+        </div>
+
         <article className="glass-panel rounded-[36px] p-7 md:p-9 lg:col-start-2">
           <p className="section-label">Current briefs</p>
           <div className="mt-4 space-y-4">

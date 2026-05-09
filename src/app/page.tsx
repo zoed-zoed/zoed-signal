@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { BriefCard } from "@/components/brief/brief-card";
 import { SiteShell } from "@/components/layout/site-shell";
-import { SupabaseConnectionCheck } from "@/components/news/supabase-connection-check";
 import { getBriefs } from "@/lib/data/briefs";
 import { getNewsItems } from "@/lib/data/news";
 
@@ -142,8 +141,6 @@ export default async function Home({ searchParams }: HomePageProps) {
         </div>
 
         <aside className="space-y-5">
-          <SupabaseConnectionCheck />
-
           <article className="glass-panel rounded-[30px] p-6">
             <p className="section-label">Why this product</p>
             <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--charcoal)]">
