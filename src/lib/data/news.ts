@@ -21,6 +21,20 @@ export async function getNewsItems(options?: { onlyPublished?: boolean }): Promi
 
     const { data, error } = await query;
 
+    if (error && options?.onlyPublished && isMissingCurationStageColumn(error.message)) {
+      const fallback = await supabase.from("news_items").select("*").order("published_at", { ascending: false });
+
+      if (fallback.error) {
+        throw new Error(`Failed to read news items from Supabase: ${fallback.error.message}`);
+      }
+
+      return filterValidItems(
+        "news",
+        ((fallback.data ?? []) as NewsItemRow[]).map(newsItemFromRow),
+        sanitizeNewsItemRecord,
+      ).filter((item) => item.curationStage === "published");
+    }
+
     if (error) {
       throw new Error(`Failed to read news items from Supabase: ${error.message}`);
     }
@@ -52,17 +66,49 @@ export async function getAllNewsForBrief(briefId: string): Promise<NewsItem[]> {
 export async function saveNewsItem(item: NewsItem): Promise<NewsItem> {
   if (getDataSourceMode() === "supabase") {
     const supabase = getRequiredSupabaseClient();
-    const { data, error } = await supabase
+    const row = newsItemToRow(item);
+    const attempt = await supabase
       .from("news_items")
-      .upsert(newsItemToRow(item), { onConflict: "id" })
+      .upsert(row, { onConflict: "id" })
       .select()
       .single();
 
-    if (error) {
-      throw new Error(`Failed to save news item to Supabase: ${error.message}`);
+    if (attempt.error && isMissingCurationStageColumn(attempt.error.message)) {
+      const legacyRow: Omit<NewsItemRow, "curation_stage"> = {
+        id: row.id,
+        brief_id: row.brief_id,
+        title: row.title,
+        source_name: row.source_name,
+        source_url: row.source_url,
+        published_at: row.published_at,
+        category: row.category,
+        importance: row.importance,
+        what_happened: row.what_happened,
+        why_important: row.why_important,
+        relevance_to_business_students: row.relevance_to_business_students,
+        interview_or_case_use: row.interview_or_case_use,
+        next_action: row.next_action,
+        tags: row.tags,
+        saved_type: row.saved_type,
+      };
+      const fallback = await supabase
+        .from("news_items")
+        .upsert(legacyRow, { onConflict: "id" })
+        .select()
+        .single();
+
+      if (fallback.error) {
+        throw new Error(`Failed to save news item to Supabase: ${fallback.error.message}`);
+      }
+
+      return sanitizeNewsItemRecord(newsItemFromRow(fallback.data as NewsItemRow)) ?? item;
     }
 
-    return sanitizeNewsItemRecord(newsItemFromRow(data as NewsItemRow)) ?? item;
+    if (attempt.error) {
+      throw new Error(`Failed to save news item to Supabase: ${attempt.error.message}`);
+    }
+
+    return sanitizeNewsItemRecord(newsItemFromRow(attempt.data as NewsItemRow)) ?? item;
   }
 
   const items = await getNewsItems();
@@ -123,4 +169,8 @@ function getRequiredSupabaseClient() {
     throw new Error("Supabase client is unavailable.");
   }
   return supabase;
+}
+
+function isMissingCurationStageColumn(message: string) {
+  return message.includes("curation_stage") && message.includes("column");
 }
