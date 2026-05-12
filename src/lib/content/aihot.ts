@@ -213,8 +213,8 @@ function toPreviewItem(item: AiHotItem, mode: AiHotMode): AiHotPreviewItem {
 }
 
 const IMPORTANCE_OPTIONS = {
-  mustRead: "蹇呯湅" as Importance,
-  scan: "鍙壂" as Importance,
+  mustRead: "必看" as Importance,
+  scan: "可扫" as Importance,
 };
 
 function mapAiHotItemToNewsItem(
