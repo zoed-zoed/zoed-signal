@@ -72,7 +72,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                 本期你会看到什么
               </h2>
             </div>
-            <span className="chip signal-chip mt-1">Vol.1</span>
+            <span className="chip signal-chip mt-1">{latestBrief ? latestBrief.date : "Live"}</span>
           </div>
 
           <div className="mt-8 grid gap-4">
