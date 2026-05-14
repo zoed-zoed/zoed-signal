@@ -77,3 +77,24 @@ execute function public.set_updated_at();
 alter table public.briefs enable row level security;
 alter table public.news_items enable row level security;
 alter table public.bookmarks enable row level security;
+
+-- Current access model for zoed.signal:
+-- 1. The website reads and writes data through the server using service_role.
+-- 2. We do not expose these tables directly to anon/authenticated clients yet.
+-- 3. Future tables should also remain service-only by default until Auth + RLS policies are introduced.
+
+grant usage on schema public to service_role;
+
+revoke all on table public.briefs from anon, authenticated;
+revoke all on table public.news_items from anon, authenticated;
+revoke all on table public.bookmarks from anon, authenticated;
+
+grant select, insert, update, delete on table public.briefs to service_role;
+grant select, insert, update, delete on table public.news_items to service_role;
+grant select, insert, update, delete on table public.bookmarks to service_role;
+
+alter default privileges in schema public
+grant select, insert, update, delete on tables to service_role;
+
+alter default privileges in schema public
+grant usage, select on sequences to service_role;
