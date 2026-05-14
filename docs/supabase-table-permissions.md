@@ -22,8 +22,9 @@ At the current stage of `zoed.signal`:
 
 So the safest current rule is:
 
-- business tables are available to `service_role`
-- `anon` and `authenticated` do not get table access yet
+- published content tables can be read by `anon` and `authenticated`
+- internal and user tables stay service-only for now
+- the server continues to write through `service_role`
 
 ## Table-by-table rule
 
@@ -36,8 +37,8 @@ What it stores:
 Who should access it now:
 
 - `service_role`: can read, create, update, delete
-- `anon`: no direct table access
-- `authenticated`: no direct table access
+- `anon`: read only
+- `authenticated`: read only
 
 Why:
 
@@ -53,54 +54,119 @@ What it stores:
 Who should access it now:
 
 - `service_role`: can read, create, update, delete
-- `anon`: no direct table access
-- `authenticated`: no direct table access
+- `anon`: read only
+- `authenticated`: read only
 
 Why:
 
 - this is core editorial content
 - it is currently managed through server-side code and admin flows
 
-### `public.bookmarks`
-
-What it stores:
-
-- saved news items grouped into buckets like `interview`, `case`, `content`, `research`
+### `public.source_feeds`
 
 Who should access it now:
 
 - `service_role`: can read, create, update, delete
-- `anon`: no direct table access
-- `authenticated`: no direct table access
+- `anon`: no access
+- `authenticated`: no access
 
-Why:
+### `public.source_import_runs`
 
-- the project does not yet have a finished user auth and per-user RLS model
-- exposing this table too early would make later permission cleanup harder
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: no access
+
+### `public.source_items_raw`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: no access
+
+### `public.jobs`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: no access
+
+### `public.feature_flags`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: no access
+
+### `public.system_settings`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: no access
+
+### `public.profiles`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: later use RLS, not now
+
+### `public.user_bookmarks`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: later use RLS, not now
+
+### `public.user_reads`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: later use RLS, not now
+
+### `public.user_feedback`
+
+Who should access it now:
+
+- `service_role`: can read, create, update, delete
+- `anon`: no access
+- `authenticated`: later use RLS, not now
 
 ## What changed in `schema.sql`
 
 We added four important ideas:
 
 1. Explicit `grant` for current tables
-   This ensures `service_role` is explicitly allowed to use the current business tables.
+   This ensures the right roles can reach the right tables through the Data API.
 
-2. Explicit `revoke` for `anon` and `authenticated`
-   This matches the current product stage: no direct client-side database access yet.
+2. Public read access only for `briefs` and `news_items`
+   This matches the product behavior where published content is visible to site visitors.
 
-3. `alter default privileges`
+3. Internal and user tables stay service-only for now
+   This avoids premature client-side exposure before Auth + RLS are finished.
+
+4. `alter default privileges`
    This helps future tables stay accessible to `service_role` by default.
 
-4. RLS stays enabled
+5. RLS stays enabled
    We keep row level security enabled so the project can evolve safely later.
 
 ## What this means in plain language
 
-For now, all three current business tables follow one rule:
+For now, the project follows two rules:
 
-- only the server is allowed to use them directly
-
-This matches how `zoed.signal` works today.
+- public content can be read by visitors
+- everything else stays server-controlled
 
 ## What to do when adding a new table later
 
@@ -155,7 +221,7 @@ That is a later-stage change, not the current one.
 
 For `zoed.signal` right now, the correct and simplest permissions model is:
 
-1. `briefs`, `news_items`, and `bookmarks` are service-only tables.
-2. The app server can read and write them with `service_role`.
-3. `anon` and `authenticated` do not directly access them yet.
+1. `briefs` and `news_items` are public-read tables.
+2. All internal and user-scoped tables are service-only for now.
+3. The legacy `bookmarks` table is retired in favor of `user_bookmarks`.
 4. Future tables should follow this same rule by default until Auth and RLS policies are introduced properly.

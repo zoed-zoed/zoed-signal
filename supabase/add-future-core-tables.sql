@@ -133,3 +133,35 @@ alter table public.user_feedback enable row level security;
 alter table public.jobs enable row level security;
 alter table public.system_settings enable row level security;
 alter table public.feature_flags enable row level security;
+
+grant usage on schema public to anon, authenticated, service_role;
+
+revoke all on table public.source_feeds from anon, authenticated;
+revoke all on table public.source_import_runs from anon, authenticated;
+revoke all on table public.source_items_raw from anon, authenticated;
+revoke all on table public.profiles from anon, authenticated;
+revoke all on table public.user_bookmarks from anon, authenticated;
+revoke all on table public.user_reads from anon, authenticated;
+revoke all on table public.user_feedback from anon, authenticated;
+revoke all on table public.jobs from anon, authenticated;
+revoke all on table public.system_settings from anon, authenticated;
+revoke all on table public.feature_flags from anon, authenticated;
+
+grant select, insert, update, delete on table public.source_feeds to service_role;
+grant select, insert, update, delete on table public.source_import_runs to service_role;
+grant select, insert, update, delete on table public.source_items_raw to service_role;
+grant select, insert, update, delete on table public.profiles to service_role;
+grant select, insert, update, delete on table public.user_bookmarks to service_role;
+grant select, insert, update, delete on table public.user_reads to service_role;
+grant select, insert, update, delete on table public.user_feedback to service_role;
+grant select, insert, update, delete on table public.jobs to service_role;
+grant select, insert, update, delete on table public.system_settings to service_role;
+grant select, insert, update, delete on table public.feature_flags to service_role;
+
+grant usage, select on all sequences in schema public to service_role;
+
+alter default privileges in schema public
+grant select, insert, update, delete on tables to service_role;
+
+alter default privileges in schema public
+grant usage, select on sequences to service_role;

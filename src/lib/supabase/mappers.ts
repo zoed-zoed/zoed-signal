@@ -39,6 +39,13 @@ export type BookmarkRow = {
   created_at: string;
 };
 
+export type UserBookmarkRow = {
+  user_id: string;
+  news_id: string;
+  bucket: SavedType;
+  created_at: string;
+};
+
 function normalizeArray<T>(value: T[] | null | undefined) {
   return Array.isArray(value) ? value : [];
 }
@@ -128,5 +135,13 @@ export function bookmarkToRow(bookmark: Bookmark): BookmarkRow {
     news_id: bookmark.newsId,
     bucket: bookmark.bucket,
     created_at: bookmark.createdAt,
+  };
+}
+
+export function bookmarkFromUserRow(row: UserBookmarkRow): Bookmark {
+  return {
+    newsId: row.news_id,
+    bucket: row.bucket,
+    createdAt: row.created_at,
   };
 }

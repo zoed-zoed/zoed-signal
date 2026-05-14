@@ -46,21 +46,11 @@ create table if not exists public.news_items (
   constraint news_items_curation_stage_check check (curation_stage in ('candidate', 'published'))
 );
 
-create table if not exists public.bookmarks (
-  news_id text not null references public.news_items(id) on delete cascade,
-  bucket text not null,
-  created_at timestamptz not null default timezone('utc', now()),
-  primary key (news_id, bucket),
-  constraint bookmarks_bucket_check check (bucket in ('interview', 'case', 'content', 'research'))
-);
-
 create index if not exists briefs_date_idx on public.briefs (date desc);
 create index if not exists news_items_brief_id_idx on public.news_items (brief_id);
 create index if not exists news_items_published_at_idx on public.news_items (published_at desc);
 create index if not exists news_items_category_idx on public.news_items (category);
 create index if not exists news_items_importance_idx on public.news_items (importance);
-create index if not exists bookmarks_bucket_idx on public.bookmarks (bucket);
-create index if not exists bookmarks_created_at_idx on public.bookmarks (created_at desc);
 
 drop trigger if exists briefs_set_updated_at on public.briefs;
 create trigger briefs_set_updated_at
@@ -76,22 +66,22 @@ execute function public.set_updated_at();
 
 alter table public.briefs enable row level security;
 alter table public.news_items enable row level security;
-alter table public.bookmarks enable row level security;
 
--- Current access model for zoed.signal:
--- 1. The website reads and writes data through the server using service_role.
--- 2. We do not expose these tables directly to anon/authenticated clients yet.
--- 3. Future tables should also remain service-only by default until Auth + RLS policies are introduced.
+-- Supabase Data API explicit grants for current public content tables.
+-- Public content can be read by site visitors, but only the server can modify it.
 
-grant usage on schema public to service_role;
+grant usage on schema public to anon, authenticated, service_role;
 
 revoke all on table public.briefs from anon, authenticated;
 revoke all on table public.news_items from anon, authenticated;
-revoke all on table public.bookmarks from anon, authenticated;
+
+grant select on table public.briefs to anon, authenticated;
+grant select on table public.news_items to anon, authenticated;
 
 grant select, insert, update, delete on table public.briefs to service_role;
 grant select, insert, update, delete on table public.news_items to service_role;
-grant select, insert, update, delete on table public.bookmarks to service_role;
+
+grant usage, select on all sequences in schema public to service_role;
 
 alter default privileges in schema public
 grant select, insert, update, delete on tables to service_role;

@@ -5,7 +5,7 @@ import { filterValidItems, logDataWarning } from "@/lib/data/guards";
 import { getDataSourceMode } from "@/lib/data/source-mode";
 import { getNewsById, setNewsItemSavedTypes } from "@/lib/data/news";
 import { readJsonFile, writeJsonFile } from "@/lib/storage/file-db";
-import { bookmarkFromRow, bookmarkToRow, type BookmarkRow } from "@/lib/supabase/mappers";
+import { bookmarkFromUserRow, type UserBookmarkRow } from "@/lib/supabase/mappers";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Bookmark, SavedType } from "@/types/news";
 
@@ -14,15 +14,24 @@ export async function getBookmarks(): Promise<Bookmark[]> {
 
   if (getDataSourceMode() === "supabase") {
     const supabase = getRequiredSupabaseClient();
-    const { data, error } = await supabase.from("bookmarks").select("*").order("created_at", { ascending: false });
+    const ownerUserId = await getBookmarkOwnerUserId();
+    if (!ownerUserId) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("user_bookmarks")
+      .select("user_id, news_id, bucket, created_at")
+      .eq("user_id", ownerUserId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to read bookmarks from Supabase: ${error.message}`);
+      throw new Error(`Failed to read user bookmarks from Supabase: ${error.message}`);
     }
 
     return filterValidItems(
-      "bookmarks",
-      ((data ?? []) as BookmarkRow[]).map(bookmarkFromRow),
+      "user_bookmarks",
+      ((data ?? []) as UserBookmarkRow[]).map(bookmarkFromUserRow),
       sanitizeBookmarkRecord,
     );
   }
@@ -34,17 +43,19 @@ export async function getBookmarks(): Promise<Bookmark[]> {
 export async function addBookmark(newsId: string, bucket: SavedType): Promise<Bookmark[]> {
   if (getDataSourceMode() === "supabase") {
     const supabase = getRequiredSupabaseClient();
-    const { error } = await supabase.from("bookmarks").upsert(
-      bookmarkToRow({
-        newsId,
+    const ownerUserId = await requireBookmarkOwnerUserId();
+    const { error } = await supabase.from("user_bookmarks").upsert(
+      {
+        user_id: ownerUserId,
+        news_id: newsId,
         bucket,
-        createdAt: new Date().toISOString(),
-      }),
-      { onConflict: "news_id,bucket" },
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,news_id,bucket" },
     );
 
     if (error) {
-      throw new Error(`Failed to save bookmark to Supabase: ${error.message}`);
+      throw new Error(`Failed to save user bookmark to Supabase: ${error.message}`);
     }
 
     const next = await getBookmarks();
@@ -67,10 +78,16 @@ export async function addBookmark(newsId: string, bucket: SavedType): Promise<Bo
 export async function removeBookmark(newsId: string, bucket: SavedType): Promise<Bookmark[]> {
   if (getDataSourceMode() === "supabase") {
     const supabase = getRequiredSupabaseClient();
-    const { error } = await supabase.from("bookmarks").delete().eq("news_id", newsId).eq("bucket", bucket);
+    const ownerUserId = await requireBookmarkOwnerUserId();
+    const { error } = await supabase
+      .from("user_bookmarks")
+      .delete()
+      .eq("user_id", ownerUserId)
+      .eq("news_id", newsId)
+      .eq("bucket", bucket);
 
     if (error) {
-      throw new Error(`Failed to delete bookmark from Supabase: ${error.message}`);
+      throw new Error(`Failed to delete user bookmark from Supabase: ${error.message}`);
     }
 
     const next = await getBookmarks();
@@ -103,4 +120,35 @@ function getRequiredSupabaseClient() {
     throw new Error("Supabase client is unavailable.");
   }
   return supabase;
+}
+
+async function getBookmarkOwnerUserId() {
+  const fromEnv = process.env.ZOED_BOOKMARK_OWNER_USER_ID?.trim();
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  const supabase = getRequiredSupabaseClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to resolve bookmark owner from profiles: ${error.message}`);
+  }
+
+  return data?.id ?? null;
+}
+
+async function requireBookmarkOwnerUserId() {
+  const ownerUserId = await getBookmarkOwnerUserId();
+  if (!ownerUserId) {
+    throw new Error(
+      "No bookmark owner user is available. Set ZOED_BOOKMARK_OWNER_USER_ID or create at least one profile row in Supabase.",
+    );
+  }
+  return ownerUserId;
 }
