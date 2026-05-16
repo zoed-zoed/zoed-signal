@@ -4,6 +4,7 @@ import { BriefCard } from "@/components/brief/brief-card";
 import { SiteShell } from "@/components/layout/site-shell";
 import { getBriefs } from "@/lib/data/briefs";
 import { getNewsItems } from "@/lib/data/news";
+import { formatDate, formatRelativeHours } from "@/lib/utils/format";
 
 type HomePageProps = {
   searchParams?: Promise<{
@@ -15,6 +16,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const [briefs, items] = await Promise.all([getBriefs(), getNewsItems({ onlyPublished: true })]);
   const params = (await searchParams) ?? {};
   const sortOrder = params.order === "asc" ? "asc" : "desc";
+  const todayLabel = formatDate(new Date().toISOString());
   const newsCountByBrief = new Map<string, number>();
 
   for (const item of items) {
@@ -23,204 +25,181 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   const visibleBriefs = briefs.filter((brief) => (newsCountByBrief.get(brief.id) ?? 0) > 0);
   const latestBrief = visibleBriefs[0];
+  const currentSignals = latestBrief ? items.filter((item) => item.briefId === latestBrief.id).slice(0, 3) : [];
   const displayBriefs = sortOrder === "asc" ? [...visibleBriefs].reverse() : visibleBriefs;
 
   return (
-    <SiteShell>
-      <section className="grid gap-6 lg:grid-cols-[1.02fr_0.98fr]">
-        <div className="glass-panel rounded-[36px] px-7 py-8 md:px-10 md:py-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="section-label">Warm Editorial × AI Signal Dashboard</span>
-            <span className="chip signal-chip">商业科技情报工具</span>
-          </div>
+    <SiteShell activeNav="home">
+      <section className="relative overflow-hidden rounded-[44px] border border-[var(--line)] bg-[rgba(255,255,255,0.58)] px-7 py-9 shadow-[0_28px_80px_rgba(32,46,77,0.06)] md:px-12 md:py-14">
+        <div className="hero-orbit left-[-80px] top-20 h-[220px] w-[220px]" />
+        <div className="hero-orbit right-[18%] top-8 h-[130px] w-[130px]" />
+        <div className="hero-orbit bottom-8 right-[-40px] h-[260px] w-[260px]" />
 
-          <div className="mt-8 max-w-4xl">
-            <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--slate)]">zoed.signal</p>
-            <h1 className="text-balance mt-4 max-w-4xl text-5xl font-semibold tracking-[-0.04em] text-[var(--charcoal)] md:text-7xl">
-              Less slop, <span className="text-[var(--accent-strong)]">more signal.</span>
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-              把复杂商业科技新闻压缩成有判断力的结构化简报，帮助商科学生更快形成行业认知、求职谈资和可复用的内容资产。
-            </p>
-          </div>
-
-          <div className="mt-8 editorial-rule" />
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href={latestBrief ? `/briefs/${latestBrief.id}` : "/"}
-              className="inline-flex items-center justify-center rounded-full bg-[var(--charcoal)] px-5 py-3 text-sm font-semibold text-white! transition hover:translate-y-[-1px] hover:bg-black"
-              style={{ color: "#ffffff" }}
-            >
-              查看最新简报
-            </Link>
-            <Link
-              href="/admin/news/new"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white! transition hover:border-[var(--accent-strong)] hover:bg-[var(--accent-strong)]"
-              style={{ color: "#ffffff" }}
-            >
-              添加新闻
-            </Link>
-          </div>
-        </div>
-
-        <div className="dashboard-card rounded-[36px] p-7 md:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--slate)]">Signal Board</p>
-              <h2 className="mt-4 text-[2.8rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[var(--charcoal)] md:text-[3.8rem]">
-                本期你会看到什么
-              </h2>
+        <div className="relative grid gap-10 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="max-w-4xl">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="signal-chip chip">每日简报 • {todayLabel}</span>
+              <span className="text-sm text-[var(--muted)]">科技商业新闻，为清晰决策而筛选</span>
             </div>
-            <span className="chip signal-chip mt-1">{latestBrief ? latestBrief.date : "Live"}</span>
+
+            <h1 className="mt-8 max-w-5xl text-balance text-[3.6rem] font-semibold leading-[0.94] tracking-[-0.07em] text-[var(--midnight)] md:text-[6rem]">
+              科技商业新闻，
+              <br />
+              为清晰决策而筛选
+            </h1>
+
+            <p className="mt-7 max-w-3xl text-[1.45rem] leading-[1.8] text-[var(--slate)]">
+              将 AI、科技与商业信号提炼为聚焦的每日洞察，实时追踪真正值得继续跟进的公司动作、市场变化与职业线索。
+            </p>
+
+            <div className="mt-14 flex flex-wrap items-center gap-6 text-base text-[var(--slate)]">
+              {latestBrief ? (
+                <Link href={`/briefs/${latestBrief.id}`} className="inline-flex items-center gap-2 font-medium text-[var(--midnight)] transition hover:text-[var(--accent-strong)]">
+                  阅读本期简报 <span aria-hidden="true">↗</span>
+                </Link>
+              ) : null}
+              <span>Every briefing becomes part of the archive.</span>
+            </div>
           </div>
 
-          <div className="mt-8 grid gap-4">
-            <BoardCard
-              eyebrow="Must read"
-              title="企业级 AI Agent"
-              detail="看懂 AI 如何真正进入企业流程，而不只是停留在聊天工具层。"
-            />
-            <BoardCard
-              eyebrow="Commercial signal"
-              title="AI 定价与商业化"
-              detail="从订阅策略、团队套餐和用户分层，看产品如何开始赚钱。"
-            />
-            <BoardCard
-              eyebrow="Career use"
-              title="求职 / 商赛可复用"
-              detail="每条内容都能被沉淀成面试谈资、案例素材或内容选题。"
-            />
+          <div className="rounded-[36px] border border-[var(--line)] bg-[rgba(255,255,255,0.76)] p-6 md:p-8">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-[2rem] font-semibold tracking-[-0.05em] text-[var(--midnight)]">本期你会看到什么</h2>
+              <span className="signal-chip chip">{todayLabel}</span>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {currentSignals.length ? (
+                currentSignals.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/briefs/${item.briefId}`}
+                    className="soft-card block rounded-[28px] p-5 transition duration-300 hover:-translate-y-1 hover:border-[rgba(214,164,106,0.28)]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-full bg-[var(--sage-soft)] px-3 py-1 text-sm font-medium text-[var(--success)]">
+                        {item.category}
+                      </span>
+                      <span className="text-sm text-[var(--muted)]">{formatRelativeHours(item.publishedAt)}</span>
+                    </div>
+                    <h3 className="mt-4 text-[1.8rem] font-semibold leading-[1.22] tracking-[-0.05em] text-[var(--midnight)]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-4 text-base leading-8 text-[var(--muted)]">{item.whyImportant}</p>
+                  </Link>
+                ))
+              ) : (
+                <div className="rounded-[28px] border border-dashed border-[var(--line)] px-5 py-6 text-sm leading-7 text-[var(--muted)]">
+                  当前还没有可展示的本期新闻。等导入完成后，这里会自动出现 3 条可点击的重点信号。
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mt-12 grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-        <div>
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <p className="section-label">Brief List</p>
-              <h2 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-[var(--charcoal)]">
-                像情报归档一样浏览每一期，而不是像刷普通新闻流
-              </h2>
-            </div>
+      <section id="today-headlines" className="mt-16">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="section-icon">
+              <HeadlineIcon />
+            </span>
+            <h2 className="text-[3rem] font-semibold tracking-[-0.06em] text-[var(--midnight)]">今日头条</h2>
+          </div>
+          <div className="hidden items-center gap-3 text-sm text-[var(--muted)] md:flex">
+            <span className="inline-flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-[var(--accent)]" />
+              实时 • 5 分钟前更新
+            </span>
+          </div>
+        </div>
 
-            <div className="flex flex-wrap gap-2">
+        <div className="grid gap-5 lg:grid-cols-3">
+          {currentSignals.map((item) => (
+            <Link
+              key={item.id}
+              href={`/briefs/${item.briefId}`}
+              className="group rounded-[32px] border border-[var(--line-strong)] bg-white px-7 py-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(32,46,77,0.08)]"
+            >
+              <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
+                <span className="rounded-full bg-[var(--sage)] px-3 py-1 font-medium text-white">{item.category}</span>
+                <span>{formatRelativeHours(item.publishedAt)}</span>
+              </div>
+              <h3 className="mt-6 text-[2.25rem] font-semibold leading-[1.15] tracking-[-0.05em] text-[var(--midnight)]">
+                {item.title}
+              </h3>
+              <p className="mt-5 text-lg leading-9 text-[var(--muted)]">{item.whatHappened}</p>
+              <p className="mt-8 text-sm font-medium text-[var(--midnight)] transition group-hover:text-[var(--accent-strong)]">
+                点进这期简报查看完整拆解 →
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-16">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="section-icon">
+              <ArchiveIcon />
+            </span>
+            <div>
+              <h2 className="text-[3rem] font-semibold tracking-[-0.06em] text-[var(--midnight)]">简报归档</h2>
+              <p className="mt-2 text-lg text-[var(--muted)]">Every briefing becomes part of the archive.</p>
+            </div>
+          </div>
+
+          <div className="rounded-full border border-[var(--line-strong)] bg-[rgba(255,255,255,0.85)] p-1">
+            <div className="flex items-center gap-1 text-sm">
               <Link
-                href="/?order=desc"
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  sortOrder === "desc"
-                    ? "bg-[var(--charcoal)] text-white"
-                    : "border border-[var(--line)] bg-white/75 text-[var(--foreground)]"
+                href="/?order=desc#archive"
+                className={`rounded-full px-4 py-2.5 transition ${
+                  sortOrder === "desc" ? "bg-[var(--midnight)] text-white" : "text-[var(--muted)] hover:text-[var(--midnight)]"
                 }`}
               >
                 最新优先
               </Link>
               <Link
-                href="/?order=asc"
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  sortOrder === "asc"
-                    ? "bg-[var(--charcoal)] text-white"
-                    : "border border-[var(--line)] bg-white/75 text-[var(--foreground)]"
+                href="/?order=asc#archive"
+                className={`rounded-full px-4 py-2.5 transition ${
+                  sortOrder === "asc" ? "bg-[var(--midnight)] text-white" : "text-[var(--muted)] hover:text-[var(--midnight)]"
                 }`}
               >
                 最早优先
               </Link>
             </div>
           </div>
-
-          <div className="grid gap-5">
-            {displayBriefs.map((brief) => (
-              <BriefCard
-                key={brief.id}
-                brief={brief}
-                newsCount={newsCountByBrief.get(brief.id) ?? 0}
-              />
-            ))}
-          </div>
         </div>
 
-        <aside className="space-y-5">
-          <article className="glass-panel rounded-[30px] p-6">
-            <p className="section-label">Why this product</p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--charcoal)]">
-              不是只告诉你新闻，而是告诉你怎么用
-            </h3>
-            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-              zoed.signal 的目标不是做泛科技资讯页，而是帮非技术背景学生把 AI 与商业科技新闻转化成面试表达、商赛思路和职业判断。
-            </p>
-          </article>
-
-          <article className="glass-panel rounded-[30px] p-6">
-            <p className="section-label">Output logic</p>
-            <div className="mt-4 space-y-4">
-              <OutputItem
-                index="01"
-                title="Signal"
-                body="从可靠来源里挑出真正值得看的新闻，不追求堆量。"
-              />
-              <OutputItem
-                index="02"
-                title="Context"
-                body="解释商业意义和行业位置，帮你建立长期认知。"
-              />
-              <OutputItem
-                index="03"
-                title="Action"
-                body="给出一个很小的下一步，把新闻变成可积累的资产。"
-              />
-            </div>
-          </article>
-
-          <article className="dashboard-card rounded-[30px] p-6">
-            <p className="section-label">Roadmap preview</p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-[var(--slate)]">
-              <li>• 工作日推送</li>
-              <li>• 仅周末总结</li>
-              <li>• 重大新闻即时提醒 + 日常汇总</li>
-              <li>• 收藏后的面试谈资库 / 商赛素材库</li>
-            </ul>
-          </article>
-        </aside>
+        <div id="archive" className="grid gap-5">
+          {displayBriefs.map((brief) => (
+            <BriefCard
+              key={brief.id}
+              brief={brief}
+              newsCount={newsCountByBrief.get(brief.id) ?? 0}
+            />
+          ))}
+        </div>
       </section>
     </SiteShell>
   );
 }
 
-function BoardCard({
-  eyebrow,
-  title,
-  detail,
-}: {
-  eyebrow: string;
-  title: string;
-  detail: string;
-}) {
+function HeadlineIcon() {
   return (
-    <div className="rounded-[24px] border border-[var(--line)] bg-white/78 p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]">{eyebrow}</p>
-      <p className="mt-4 text-2xl font-semibold tracking-tight text-[var(--charcoal)]">{title}</p>
-      <p className="mt-4 text-base leading-9 text-[var(--muted)]">{detail}</p>
-    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 5H9V19H5V5Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M12 9H16V19H12V9Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M19 3H23V19H19V3Z" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
   );
 }
 
-function OutputItem({
-  index,
-  title,
-  body,
-}: {
-  index: string;
-  title: string;
-  body: string;
-}) {
+function ArchiveIcon() {
   return (
-    <div className="grid grid-cols-[40px_1fr] gap-4">
-      <span className="text-sm font-semibold text-[var(--accent-strong)]">{index}</span>
-      <div>
-        <p className="text-lg font-semibold tracking-tight text-[var(--charcoal)]">{title}</p>
-        <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{body}</p>
-      </div>
-    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 8L10 13L19 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 12V19H5V12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
   );
 }

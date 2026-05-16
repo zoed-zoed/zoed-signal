@@ -12,49 +12,38 @@ export function BriefCard({ brief, newsCount }: BriefCardProps) {
   return (
     <Link
       href={`/briefs/${brief.id}`}
-      className="group glass-panel block rounded-[24px] border border-[var(--line)] p-6 transition duration-300 hover:-translate-y-1 hover:border-[rgba(159,84,47,0.22)] hover:shadow-[0_18px_50px_rgba(22,24,27,0.1)]"
+      className="group block rounded-[34px] border border-[var(--line-strong)] bg-[rgba(255,255,255,0.78)] px-7 py-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(32,46,77,0.08)]"
     >
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <span className="section-label">Briefing Archive</span>
-        <span className="chip signal-chip">{formatDate(brief.date)}</span>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <h3 className="text-2xl font-semibold tracking-tight text-[var(--charcoal)]">{brief.title}</h3>
-          <p className="mt-3 max-w-xl text-sm leading-7 text-[var(--muted)]">{brief.intro}</p>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            {brief.tags.map((tag) => (
-              <span className="chip signal-chip" key={tag}>
-                #{tag}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-3xl">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
+            <span className="signal-chip chip">{formatDate(brief.date)}</span>
+            <span>{newsCount} 条新闻</span>
+            {brief.tags.slice(0, 2).map((tag) => (
+              <span className="rounded-full bg-[var(--chip)] px-3 py-1" key={tag}>
+                {tag}
               </span>
             ))}
           </div>
+
+          <h3 className="mt-5 text-[2.45rem] font-semibold leading-[1.1] tracking-[-0.06em] text-[var(--midnight)]">
+            {brief.title}
+          </h3>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)]">{brief.intro}</p>
         </div>
 
-        <div className="dashboard-card rounded-[22px] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--slate)]">
-            Signal Snapshot
+        <div className="min-w-[220px] rounded-[28px] border border-[var(--line)] bg-[var(--surface)] px-5 py-5">
+          <p className="text-sm tracking-[0.18em] text-[var(--accent-strong)] uppercase">本期重点</p>
+          <p className="mt-4 text-base leading-8 text-[var(--slate)]">
+            {brief.coreTrend ?? "点击进入本期简报，查看整理后的新闻卡片、关键信号和可继续延展的分析方向。"}
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-[var(--muted)]">新闻数量</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-[var(--charcoal)]">{newsCount}</p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--muted)]">核心用途</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--slate)]">求职谈资 / 商赛素材 / 行业判断</p>
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="mt-6 editorial-rule" />
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <p className="text-sm text-[var(--muted)]">点击进入这一期，查看结构化新闻卡片与本期总结。</p>
-        <span className="text-sm font-medium text-[var(--accent-strong)] transition group-hover:translate-x-1">
-          查看详情 →
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-[var(--line)] pt-5 text-sm text-[var(--muted)]">
+        <span>归档后的每一期，都会保留完整内容脉络和后续引用价值。</span>
+        <span className="font-medium text-[var(--midnight)] transition group-hover:text-[var(--accent-strong)]">
+          查看这一期 →
         </span>
       </div>
     </Link>

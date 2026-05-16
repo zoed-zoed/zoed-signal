@@ -3,13 +3,16 @@
 import { useState, useTransition } from "react";
 
 type ImportResponse = {
+  runId?: number;
   briefId: string;
   briefTitle: string;
   fetchedCount: number;
   importedCount: number;
   skippedCount: number;
+  failedCount: number;
   mode: "selected" | "all";
   since: number;
+  warnings?: string[];
 };
 
 export function AiHotImportPanel() {
@@ -52,7 +55,7 @@ export function AiHotImportPanel() {
       }
 
       setMessage(
-        `已导入 ${data.importedCount ?? 0} 条内容到 ${data.briefTitle ?? "今日简报"}（briefId: ${data.briefId ?? "-" }）。`,
+        `已完成导入：抓取 ${data.fetchedCount ?? 0} 条，写入 ${data.importedCount ?? 0} 条，跳过 ${data.skippedCount ?? 0} 条，失败 ${data.failedCount ?? 0} 条，归入 ${data.briefTitle ?? "今日简报"}${data.runId ? `（runId: ${data.runId}）` : ""}。${data.warnings?.length ? ` 注意：有 ${data.warnings.length} 条告警。` : ""}`,
       );
     });
   };

@@ -2,6 +2,12 @@ import { createHash } from "node:crypto";
 
 import { getBriefById, saveBrief } from "@/lib/data/briefs";
 import { getNewsItems, saveNewsItem } from "@/lib/data/news";
+import {
+  createSourceImportRun,
+  ensureSourceFeed,
+  finalizeSourceImportRun,
+  saveSourceItemRawRecords,
+} from "@/lib/data/source-imports";
 import { NEWS_CATEGORY_OPTIONS, type Importance, type NewsCategory, type NewsItem } from "@/types/news";
 
 const AIHOT_BASE_URL = "https://aihot.virxact.com";
@@ -56,14 +62,17 @@ export type AiHotPreviewItem = {
 };
 
 export type AiHotImportResult = {
+  runId?: number;
   briefId: string;
   briefTitle: string;
   fetchedCount: number;
   importedCount: number;
   skippedCount: number;
+  failedCount: number;
   mode: AiHotMode;
   since: number;
   items: AiHotPreviewItem[];
+  warnings?: string[];
 };
 
 export async function fetchAiHotPreview(query: AiHotQuery = {}): Promise<AiHotPreviewItem[]> {
@@ -74,12 +83,34 @@ export async function fetchAiHotPreview(query: AiHotQuery = {}): Promise<AiHotPr
 export async function importAiHotItems(query: AiHotQuery = {}): Promise<AiHotImportResult> {
   const mode = query.mode ?? "selected";
   const since = clampSince(query.since);
+  const warnings: string[] = [];
+  let runId: number | undefined;
+
+  try {
+    await ensureSourceFeed({
+      id: "aihot",
+      name: "AI HOT",
+      sourceType: "api",
+      baseUrl: AIHOT_BASE_URL,
+      notes: "AI HOT public items API used as the first external content source for zoed.signal.",
+    });
+    const run = await createSourceImportRun({
+      feedId: "aihot",
+      triggerType: "manual",
+      notes: `mode=${mode}; since=${since}`,
+    });
+    runId = run.id;
+  } catch (error) {
+    warnings.push(error instanceof Error ? error.message : "Failed to initialize source import tracing.");
+  }
+
   const response = await fetchAiHotItems({ ...query, mode, since });
-  const items = dedupeAiHotItems(response.items);
+  const dedupedItems = dedupeAiHotItems(response.items);
+  const duplicateCount = response.items.length - dedupedItems.length;
 
   const briefDate = getShanghaiToday();
   const briefId = `aihot-${briefDate}`;
-  const briefTitle = `AI HOT Daily ${briefDate}`;
+  const briefTitle = `AI HOT 每日简报 · ${briefDate}`;
   const existingBrief = await getBriefById(briefId);
   const existingItems = await getNewsItems();
   const existingByUrl = new Map(existingItems.map((item) => [normalizeUrl(item.sourceUrl), item]));
@@ -90,8 +121,8 @@ export async function importAiHotItems(query: AiHotQuery = {}): Promise<AiHotImp
     date: existingBrief?.date ?? briefDate,
     intro:
       existingBrief?.intro ??
-      "This issue is imported from AI HOT as the first real external content source for zoed.signal.",
-    tags: Array.from(new Set([...(existingBrief?.tags ?? []), "AI HOT", mode === "selected" ? "Selected" : "All"])),
+      "从 AI HOT 导入并筛选的当日科技商业信号，聚焦值得继续跟进的 AI、市场与公司动态。",
+    tags: Array.from(new Set([...(existingBrief?.tags ?? []), "AI HOT", mode === "selected" ? "精选池" : "全量池"])),
     coreTrend: existingBrief?.coreTrend,
     studentInsight: existingBrief?.studentInsight,
     contentIdeas: existingBrief?.contentIdeas,
@@ -99,20 +130,98 @@ export async function importAiHotItems(query: AiHotQuery = {}): Promise<AiHotImp
     newsItemIds: existingBrief?.newsItemIds ?? [],
   };
 
-  // Create the brief shell first so news_items.brief_id passes the foreign key check.
   await saveBrief(baseBrief);
 
   const imported: NewsItem[] = [];
+  const rawRecords: Parameters<typeof saveSourceItemRawRecords>[0] = [];
+  let failedCount = 0;
+  const seenUrls = new Set<string>();
 
-  for (const item of items) {
-    const existing = existingByUrl.get(normalizeUrl(item.url));
-    const mapped = mapAiHotItemToNewsItem(item, {
-      briefId,
-      mode,
-      existingItem: existing,
-    });
-    await saveNewsItem(mapped);
-    imported.push(mapped);
+  for (const item of response.items) {
+    const normalizedUrl = normalizeUrl(item.url);
+    const normalizedSummary = normalizeSentence(item.summary || item.title, 600);
+
+    if (!item.url || !item.title || !item.publishedAt) {
+      failedCount += 1;
+      rawRecords.push({
+        runId: runId ?? null,
+        feedId: "aihot",
+        externalId: item.id,
+        sourceUrl: item.url,
+        title: item.title,
+        publishedAt: item.publishedAt,
+        rawPayload: item as unknown as Record<string, unknown>,
+        normalizedSummary,
+        dedupeKey: normalizedUrl || null,
+        processingStatus: "failed",
+      });
+      continue;
+    }
+
+    if (seenUrls.has(normalizedUrl)) {
+      rawRecords.push({
+        runId: runId ?? null,
+        feedId: "aihot",
+        externalId: item.id,
+        sourceUrl: item.url,
+        title: item.title,
+        publishedAt: item.publishedAt,
+        rawPayload: item as unknown as Record<string, unknown>,
+        normalizedSummary,
+        dedupeKey: normalizedUrl,
+        processingStatus: "duplicate",
+      });
+      continue;
+    }
+
+    seenUrls.add(normalizedUrl);
+
+    try {
+      const existing = existingByUrl.get(normalizedUrl);
+      const mapped = mapAiHotItemToNewsItem(item, {
+        briefId,
+        mode,
+        existingItem: existing,
+      });
+      await saveNewsItem(mapped);
+      imported.push(mapped);
+      rawRecords.push({
+        runId: runId ?? null,
+        feedId: "aihot",
+        externalId: item.id,
+        sourceUrl: item.url,
+        title: item.title,
+        publishedAt: item.publishedAt,
+        rawPayload: item as unknown as Record<string, unknown>,
+        normalizedSummary,
+        dedupeKey: normalizedUrl,
+        processingStatus: "imported",
+        mappedNewsItemId: mapped.id,
+      });
+    } catch (error) {
+      failedCount += 1;
+      warnings.push(
+        error instanceof Error ? `Failed to import "${item.title}": ${error.message}` : `Failed to import "${item.title}".`,
+      );
+      rawRecords.push({
+        runId: runId ?? null,
+        feedId: "aihot",
+        externalId: item.id,
+        sourceUrl: item.url,
+        title: item.title,
+        publishedAt: item.publishedAt,
+        rawPayload: item as unknown as Record<string, unknown>,
+        normalizedSummary,
+        dedupeKey: normalizedUrl,
+        processingStatus: "failed",
+      });
+    }
+  }
+
+  try {
+    await saveSourceItemRawRecords(rawRecords);
+  } catch (error) {
+    warnings.push(error instanceof Error ? error.message : "Failed to save raw source item records.");
   }
 
   const mergedNewsItemIds = Array.from(new Set([...(existingBrief?.newsItemIds ?? []), ...imported.map((item) => item.id)]));
@@ -122,25 +231,52 @@ export async function importAiHotItems(query: AiHotQuery = {}): Promise<AiHotImp
     coreTrend: existingBrief?.coreTrend ?? summarizeCategories(imported),
     studentInsight:
       existingBrief?.studentInsight ??
-      "Focus on turning daily AI news into business judgment, interview examples, and reusable market context.",
+      "重点不是记住新闻本身，而是把每天的 AI 变化转成你对市场、岗位和公司动作的判断。",
     contentIdeas:
       existingBrief?.contentIdeas ??
-      "Pick the most useful stories for students: product direction, business model, hiring signal, and case material.",
+      "优先挑出最适合继续延展的方向：产品路线、商业化、招聘信号和可以拿来做案例拆解的公司动作。",
     resumePortfolioNote:
       existingBrief?.resumePortfolioNote ??
-      "These stories can later become interview notes, case examples, or content assets in your own portfolio.",
+      "本期内容适合继续沉淀成面试表达、商赛案例卡片，或你自己的行业观察素材。",
     newsItemIds: mergedNewsItemIds,
   });
 
+  const skippedCount = duplicateCount;
+
+  if (runId) {
+    try {
+      await finalizeSourceImportRun(runId, {
+        runStatus: failedCount > 0 && imported.length === 0 ? "failed" : "success",
+        fetchedCount: response.items.length,
+        importedCount: imported.length,
+        skippedCount,
+        failedCount,
+        notes: [
+          `mode=${mode}`,
+          `since=${since}`,
+          duplicateCount > 0 ? `duplicates_in_batch=${duplicateCount}` : "",
+          warnings.length ? `warnings=${warnings.length}` : "",
+        ]
+          .filter(Boolean)
+          .join("; "),
+      });
+    } catch (error) {
+      warnings.push(error instanceof Error ? error.message : "Failed to finalize source import run.");
+    }
+  }
+
   return {
+    runId,
     briefId,
     briefTitle: baseBrief.title,
     fetchedCount: response.items.length,
     importedCount: imported.length,
-    skippedCount: response.items.length - imported.length,
+    skippedCount,
+    failedCount,
     mode,
     since,
-    items: items.map((item) => toPreviewItem(item, mode)),
+    items: dedupedItems.map((item) => toPreviewItem(item, mode)),
+    warnings: warnings.length ? warnings : undefined,
   };
 }
 
@@ -289,63 +425,63 @@ function mapAiHotCategory(item: AiHotItem): NewsCategory {
 function buildWhyImportant(category: NewsCategory, sourceName: string): string {
   switch (category) {
     case NEWS_CATEGORY_OPTIONS[0]:
-      return `${sourceName} is pushing a concrete AI product or model update, which helps track where product capability is really moving.`;
+      return `${sourceName} 这次动作对应的是具体产品或模型能力变化，能帮助你判断 AI 产品真正往哪里走。`;
     case NEWS_CATEGORY_OPTIONS[1]:
-      return "This is a strategy signal from a major company, useful for reading where resources and competitive focus are moving.";
+      return "这是偏公司战略层的信号，适合用来判断资源投入、竞争焦点和业务方向是否在变化。";
     case NEWS_CATEGORY_OPTIONS[2]:
-      return "This is directly about business model, financing, or commercial expansion, so it matters more than feature noise.";
+      return "这类信息直接关系到商业模式、融资或市场扩张，比单纯的产品噪音更值得优先跟进。";
     case NEWS_CATEGORY_OPTIONS[3]:
-      return "Policy and compliance signals shape product boundaries and commercial rollout, so they are part of the real business context.";
+      return "政策与合规会直接影响产品边界和落地节奏，所以它本身就是商业判断的一部分。";
     case NEWS_CATEGORY_OPTIONS[4]:
-      return "AI product scale always comes back to compute and infrastructure, so hardware signals matter for real adoption.";
+      return "AI 产品能不能规模化，最终都会回到算力和基础设施，因此硬件信号不能忽略。";
     case NEWS_CATEGORY_OPTIONS[5]:
-      return "Hiring signals are one of the clearest ways to see what skills and workflows companies actually need right now.";
+      return "招聘信号最能反映公司现在到底需要什么能力、什么工作流，而不只是口头上的趋势判断。";
     case NEWS_CATEGORY_OPTIONS[6]:
-      return "This is suitable case material because it can be turned into business examples, interview answers, or market observations.";
+      return "这类内容很适合沉淀成案例素材，后续可以直接转成面试表达、商赛分析或市场观察。";
     default:
-      return "This helps translate AI headlines into clearer business and career judgment.";
+      return "它能帮助你把 AI 新闻翻译成更清晰的商业判断和职业判断。";
   }
 }
 
 function buildStudentValue(category: NewsCategory): string {
   switch (category) {
     case NEWS_CATEGORY_OPTIONS[0]:
-      return "Useful for understanding product direction, feature priorities, and where user demand is becoming real.";
+      return "适合用来理解产品路线、功能优先级，以及哪些用户需求正在从概念走向真实市场。";
     case NEWS_CATEGORY_OPTIONS[1]:
-      return "Useful for building strategy judgment instead of only remembering model names or hype cycles.";
+      return "适合训练战略判断，而不只是记住模型名字或热点周期。";
     case NEWS_CATEGORY_OPTIONS[2]:
-      return "Useful for understanding how AI companies make money and how the market evaluates growth and expansion.";
+      return "适合帮助你理解 AI 公司怎么赚钱，以及市场如何评估增长和扩张。";
     case NEWS_CATEGORY_OPTIONS[3]:
-      return "Useful for building more mature judgment about product risk, compliance, and platform governance.";
+      return "适合建立对产品风险、合规要求和平台治理更成熟的判断。";
     case NEWS_CATEGORY_OPTIONS[4]:
-      return "Useful for understanding why cost structure and infrastructure affect what AI products can really scale.";
+      return "适合理解为什么成本结构和基础设施，会决定 AI 产品到底能不能真正规模化。";
     case NEWS_CATEGORY_OPTIONS[5]:
-      return "Useful for job search because it shows what companies are concretely hiring for, not just what people talk about online.";
+      return "对求职很有用，因为它展示的是公司真实在招什么，而不是网上泛泛讨论什么。";
     case NEWS_CATEGORY_OPTIONS[6]:
-      return "Useful as interview, writing, or competition material because it can be converted into a clear case or viewpoint.";
+      return "适合拿来做面试素材、写作选题或商赛案例，因为它本身就容易转成清晰观点。";
     default:
-      return "Useful for translating AI news into business, market, and career understanding.";
+      return "适合把 AI 新闻转化成你对商业、市场和职业路径的长期理解。";
   }
 }
 
 function buildInterviewUse(category: NewsCategory): string {
   switch (category) {
     case NEWS_CATEGORY_OPTIONS[0]:
-      return "Use this to explain how you judge whether a product update is strategically meaningful instead of just new.";
+      return "可以拿它说明你如何判断一次产品更新到底有没有战略意义，而不是只会复述“出了新功能”。";
     case NEWS_CATEGORY_OPTIONS[1]:
-      return "Use this as a strategy example when discussing platform moves, resource allocation, or competition.";
+      return "可以把它当成公司战略案例，用来谈平台动作、资源配置或竞争格局。";
     case NEWS_CATEGORY_OPTIONS[2]:
-      return "Use this when discussing AI monetization, pricing, financing logic, or market expansion.";
+      return "可以用在 AI 商业化、定价、融资逻辑和市场扩张相关的问题里。";
     case NEWS_CATEGORY_OPTIONS[3]:
-      return "Use this when discussing the balance between product innovation and compliance constraints.";
+      return "适合放在“产品创新和合规限制如何平衡”这类表达里。";
     case NEWS_CATEGORY_OPTIONS[4]:
-      return "Use this to show that you understand AI adoption as an infrastructure and cost problem, not only a model problem.";
+      return "可以借它体现你知道 AI 落地不仅是模型问题，也是基础设施和成本问题。";
     case NEWS_CATEGORY_OPTIONS[5]:
-      return "Use this to talk concretely about role requirements, team workflows, and what AI application jobs involve.";
+      return "可以用来具体谈岗位要求、团队工作流，以及 AI 应用岗位到底在做什么。";
     case NEWS_CATEGORY_OPTIONS[6]:
-      return "Use this as case material in interviews, competitions, or written analysis.";
+      return "可以直接拿去当面试案例、商赛材料或书面分析的支撑。";
     default:
-      return "Use this to show that you can turn daily AI news into structured business judgment.";
+      return "可以用它证明你能把日常 AI 新闻转成结构化的商业判断，而不是只会刷资讯。";
   }
 }
 
@@ -408,7 +544,7 @@ function summarizeCategories(items: NewsItem[]): string | undefined {
     .slice(0, 3)
     .map(([category]) => category);
 
-  return `Top categories in this batch: ${topCategories.join(", ")}`;
+  return `这一批内容最集中在：${topCategories.join("、")}。`;
 }
 
 function buildStableNewsId(url: string): string {

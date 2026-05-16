@@ -8,8 +8,8 @@ type NewsCardProps = {
 
 export function NewsCard({ item }: NewsCardProps) {
   return (
-    <article className="glass-panel rounded-[30px] border border-[var(--line)] p-6">
-      <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-5 md:flex-row md:items-start md:justify-between">
+    <article className="rounded-[34px] border border-[var(--line-strong)] bg-[rgba(255,255,255,0.8)] p-6 shadow-[0_18px_48px_rgba(32,46,77,0.05)] md:p-7">
+      <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-6 md:flex-row md:items-start md:justify-between">
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <span className={`chip ${item.importance === IMPORTANCE_OPTIONS[0] ? "importance-must" : "importance-scan"}`}>
@@ -18,11 +18,13 @@ export function NewsCard({ item }: NewsCardProps) {
             <span className="chip">{item.category}</span>
             <span className="chip">{formatDate(item.publishedAt)}</span>
           </div>
-          <h2 className="max-w-3xl text-2xl font-semibold leading-9 tracking-tight">{item.title}</h2>
+          <h2 className="max-w-3xl text-[2.25rem] font-semibold leading-[1.18] tracking-[-0.05em] text-[var(--midnight)]">
+            {item.title}
+          </h2>
         </div>
 
-        <div className="min-w-[220px] rounded-[22px] border border-[var(--line)] bg-white/70 p-4 text-sm text-[var(--muted)]">
-          <p className="font-medium text-[var(--foreground)]">来源</p>
+        <div className="min-w-[220px] rounded-[24px] border border-[var(--line)] bg-[var(--surface)] p-4 text-sm text-[var(--muted)]">
+          <p className="font-medium text-[var(--midnight)]">来源</p>
           <p className="mt-2">{item.sourceName}</p>
           <a
             href={item.sourceUrl}
@@ -36,10 +38,10 @@ export function NewsCard({ item }: NewsCardProps) {
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <InfoBlock title="原始事件" content={item.whatHappened} />
-        <InfoBlock title="核心摘要" content={item.whyImportant} />
-        <InfoBlock title="商业解读" content={item.interviewOrCaseUse} />
-        <InfoBlock title="对用户的价值" content={item.relevanceToBusinessStudents} />
+        <InfoBlock title="发生了什么" content={item.whatHappened} />
+        <InfoBlock title="为什么值得看" content={item.whyImportant} />
+        <InfoBlock title="你可以怎么用" content={item.interviewOrCaseUse} />
+        <InfoBlock title="继续跟进的价值" content={item.relevanceToBusinessStudents} />
       </div>
 
       <div className="mt-6 grid gap-6 border-t border-[var(--line)] pt-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -62,8 +64,8 @@ export function NewsCard({ item }: NewsCardProps) {
 
 function InfoBlock({ title, content }: { title: string; content: string }) {
   return (
-    <div className="rounded-[22px] border border-[var(--line)] bg-white/72 p-4">
-      <p className="text-sm font-medium text-[var(--foreground)]">{title}</p>
+    <div className="rounded-[24px] border border-[var(--line)] bg-[rgba(255,255,255,0.72)] p-4">
+      <p className="text-sm font-medium text-[var(--midnight)]">{title}</p>
       <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{content}</p>
     </div>
   );

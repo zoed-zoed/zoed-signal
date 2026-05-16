@@ -22,31 +22,62 @@ export default async function BriefDetailPage({ params }: BriefDetailPageProps) 
   const items = await getNewsForBrief(id);
 
   return (
-    <SiteShell>
-      <section className="glass-panel rounded-[40px] p-7 md:p-10">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="section-label">Brief Detail</span>
-          <span className="chip">{formatDate(brief.date)}</span>
-          <span className="chip">{items.length} 条新闻</span>
+    <SiteShell activeNav="news">
+      <section className="rounded-[42px] border border-[var(--line)] bg-[rgba(255,255,255,0.76)] px-7 py-8 md:px-10 md:py-10">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
+          <span className="signal-chip chip">{formatDate(brief.date)}</span>
+          <span>{items.length} 条新闻</span>
         </div>
-        <h1 className="mt-4 max-w-4xl text-balance text-4xl font-semibold tracking-tight md:text-5xl">
-          {brief.title}
-        </h1>
-        <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--muted)]">{brief.intro}</p>
 
-        <div className="mt-7 flex flex-wrap gap-2">
-          {brief.tags.map((tag) => (
-            <span className="chip" key={tag}>
-              #{tag}
-            </span>
-          ))}
+        <div className="mt-6 grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+          <div>
+            <h1 className="max-w-4xl text-balance text-[3.3rem] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--midnight)] md:text-[4.5rem]">
+              {brief.title}
+            </h1>
+            <p className="mt-5 max-w-3xl text-[1.2rem] leading-9 text-[var(--slate)]">{brief.intro}</p>
+
+            <div className="mt-7 flex flex-wrap gap-2">
+              {brief.tags.map((tag) => (
+                <span className="chip signal-chip" key={tag}>
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <article className="rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6">
+            <p className="section-label">本期速览</p>
+            <div className="mt-5 space-y-5 text-sm leading-7 text-[var(--muted)]">
+              <div>
+                <p className="font-medium text-[var(--midnight)]">本期核心趋势</p>
+                <p className="mt-2">{brief.coreTrend ?? "本期聚焦 AI、公司战略和市场信号的交叉变化。"}</p>
+              </div>
+              <div>
+                <p className="font-medium text-[var(--midnight)]">对商科学生的价值</p>
+                <p className="mt-2">{brief.studentInsight ?? "优先把新闻转成你自己的商业判断、行业认知和面试表达。"}</p>
+              </div>
+              <div>
+                <p className="font-medium text-[var(--midnight)]">如何继续利用</p>
+                <p className="mt-2">{brief.resumePortfolioNote ?? "把其中 1 到 2 条整理成素材卡片，后续用于面试、写作或商赛。"}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/library"
+                className="rounded-full bg-[var(--midnight)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--midnight-soft)]"
+              >
+                去素材库整理
+              </Link>
+              <Link
+                href="/"
+                className="rounded-full border border-[var(--line-strong)] px-5 py-2.5 text-sm text-[var(--foreground)] transition hover:bg-white"
+              >
+                返回首页
+              </Link>
+            </div>
+          </article>
         </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 lg:grid-cols-3">
-        <SummaryCard title="本期核心趋势" content={brief.coreTrend} />
-        <SummaryCard title="本期给商科生的启发" content={brief.studentInsight} />
-        <SummaryCard title="适合沉淀成作品集的内容" content={brief.resumePortfolioNote} />
       </section>
 
       <section className="mt-10 space-y-6">
@@ -54,42 +85,6 @@ export default async function BriefDetailPage({ params }: BriefDetailPageProps) 
           <NewsCard key={item.id} item={item} />
         ))}
       </section>
-
-      <section className="mt-10 grid gap-5 lg:grid-cols-[1fr_1fr]">
-        <SummaryCard title="本期适合延展的内容选题" content={brief.contentIdeas} />
-        <article className="glass-panel rounded-[30px] p-6">
-          <p className="section-label">Action</p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">下一步建议</h2>
-          <ul className="mt-4 space-y-3 text-sm leading-7 text-[var(--muted)]">
-            <li>1. 从本期新闻里挑 1 条，写成 5 句话的个人判断。</li>
-            <li>2. 把 1 条新闻加入素材库，归档到面试谈资或商赛素材。</li>
-            <li>3. 试着把 1 条“必看”新闻扩写成一段可放进作品集的行业观察。</li>
-          </ul>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/admin/news/new"
-              className="rounded-full bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
-            >
-              继续添加新闻
-            </Link>
-            <Link
-              href="/"
-              className="rounded-full border border-[var(--line)] px-4 py-2.5 text-sm text-[var(--foreground)]"
-            >
-              返回首页
-            </Link>
-          </div>
-        </article>
-      </section>
     </SiteShell>
-  );
-}
-
-function SummaryCard({ title, content }: { title: string; content?: string }) {
-  return (
-    <article className="glass-panel rounded-[28px] p-6">
-      <p className="section-label">{title}</p>
-      <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{content ?? "暂未填写"}</p>
-    </article>
   );
 }

@@ -44,7 +44,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   });
 
   return (
-    <SiteShell>
+    <SiteShell activeNav="admin" showDock={false} showAdminLink>
       <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <article className="glass-panel rounded-[36px] p-7 md:p-9">
           <p className="section-label">Admin</p>

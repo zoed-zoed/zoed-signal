@@ -18,7 +18,7 @@ export default async function EditBriefPage({ params }: EditBriefPageProps) {
   }
 
   return (
-    <SiteShell>
+    <SiteShell activeNav="admin" showDock={false} showAdminLink>
       <section className="glass-panel rounded-[40px] p-7 md:p-10">
         <p className="section-label">Edit brief</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight">编辑简报信息</h1>

@@ -2,65 +2,77 @@
 
 import { useEffect, useState } from "react";
 
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
-
-type CheckState =
+type DiagnosticsState =
   | { status: "loading" }
-  | { status: "success"; item: { id: string; title: string; source_name: string; published_at: string } }
-  | { status: "empty" }
+  | {
+      status: "ready";
+      payload: DiagnosticsPayload;
+    }
   | { status: "error"; message: string };
 
-const SELECT_POLICY_SQL = `create policy "public_can_read_news_items"
-on public.news_items
-for select
-to anon
-using (true);`;
+type DiagnosticsPayload = {
+  sourceMode: string;
+  env: {
+    publicUrl: boolean;
+    anonKey: boolean;
+    serviceRoleKey: boolean;
+  };
+  tables: {
+    newsItems: boolean;
+    curationStage: boolean;
+    sourceImportRuns: boolean;
+    sourceItemsRaw: boolean;
+  };
+  service: {
+    newsItemCount?: number;
+    latestPublished?: {
+      id: string;
+      title: string;
+      publishedAt: string;
+    };
+    error?: string;
+  };
+  anon: {
+    status: "ok" | "empty" | "error" | "skipped";
+    count?: number;
+    error?: string;
+  };
+};
 
 export function SupabaseConnectionCheck() {
-  const [state, setState] = useState<CheckState>({ status: "loading" });
+  const [state, setState] = useState<DiagnosticsState>({ status: "loading" });
 
   useEffect(() => {
     let active = true;
 
     async function runCheck() {
-      const supabase = getSupabaseBrowserClient();
+      try {
+        const response = await fetch("/api/admin/supabase-diagnostics", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as DiagnosticsPayload;
 
-      if (!supabase) {
-        if (active) {
-          setState({ status: "error", message: "前端缺少 NEXT_PUBLIC_SUPABASE_URL 或 NEXT_PUBLIC_SUPABASE_ANON_KEY。" });
+        if (!active) {
+          return;
         }
-        return;
+
+        if (!response.ok) {
+          setState({ status: "error", message: "读取 Supabase 诊断信息失败。" });
+          return;
+        }
+
+        setState({ status: "ready", payload });
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        setState({
+          status: "error",
+          message: error instanceof Error ? error.message : "读取 Supabase 诊断信息失败。",
+        });
       }
-
-      const { data, error } = await supabase
-        .from("news_items")
-        .select("id,title,source_name,published_at")
-        .eq("id", "11")
-        .maybeSingle();
-
-      if (!active) {
-        return;
-      }
-
-      if (error) {
-        setState({ status: "error", message: error.message });
-        return;
-      }
-
-      if (!data) {
-        setState({ status: "empty" });
-        return;
-      }
-
-      setState({
-        status: "success",
-        item: {
-          id: String(data.id),
-          title: String(data.title),
-          source_name: String(data.source_name),
-          published_at: String(data.published_at),
-        },
-      });
     }
 
     void runCheck();
@@ -74,58 +86,120 @@ export function SupabaseConnectionCheck() {
     <article className="glass-panel rounded-[30px] p-6">
       <p className="section-label">Supabase Check</p>
       <h3 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--charcoal)]">
-        前端匿名读取 `news_items.id = 11`
+        真实诊断当前 Supabase 接入状态
       </h3>
 
       {state.status === "loading" ? (
-        <p className="mt-4 text-sm leading-7 text-[var(--muted)]">正在用前端 public key 检查 Supabase 联通状态...</p>
-      ) : null}
-
-      {state.status === "success" ? (
-        <div className="mt-4 rounded-[22px] border border-[var(--line)] bg-white/75 p-4">
-          <p className="text-sm font-medium text-[var(--foreground)]">联通成功</p>
-          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            这说明这条数据已经通过
-            <span className="font-medium text-[var(--foreground)]"> Vercel 前端 → Supabase anon 权限 → news_items </span>
-            被读出来了。
-          </p>
-          <div className="mt-4 space-y-2 text-sm text-[var(--foreground)]">
-            <p>
-              <span className="font-medium">id:</span> {state.item.id}
-            </p>
-            <p>
-              <span className="font-medium">title:</span> {state.item.title}
-            </p>
-            <p>
-              <span className="font-medium">source:</span> {state.item.source_name}
-            </p>
-            <p>
-              <span className="font-medium">published_at:</span> {state.item.published_at}
-            </p>
-          </div>
-        </div>
-      ) : null}
-
-      {state.status === "empty" ? (
-        <div className="mt-4 rounded-[22px] border border-[rgba(202,93,52,0.18)] bg-[var(--accent-soft)] p-4">
-          <p className="text-sm font-medium text-[var(--foreground)]">前端已连上 Supabase，但匿名查询没读到这条数据</p>
-          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            我已经验证过服务端可以查到 `id = 11`，所以这通常不是“数据不存在”，而是
-            <span className="font-medium text-[var(--foreground)]"> RLS 没给 anon 只读权限</span>。
-          </p>
-          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">你可以在 Supabase SQL Editor 里执行下面这条只读 policy：</p>
-          <pre className="mt-3 overflow-x-auto rounded-[18px] bg-[rgba(34,37,43,0.92)] p-4 text-xs leading-6 text-white">
-            <code>{SELECT_POLICY_SQL}</code>
-          </pre>
-        </div>
+        <p className="mt-4 text-sm leading-7 text-[var(--muted)]">正在检查环境变量、迁移缺口和匿名读取状态...</p>
       ) : null}
 
       {state.status === "error" ? (
-        <div className="mt-4 rounded-[22px] border border-[rgba(202,93,52,0.18)] bg-[var(--accent-soft)] p-4">
-          <p className="text-sm font-medium text-[var(--foreground)]">前端匿名读取失败</p>
-          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{state.message}</p>
+        <StatusBox tone="error" title="诊断接口读取失败">
+          {state.message}
+        </StatusBox>
+      ) : null}
+
+      {state.status === "ready" ? (
+        <div className="mt-5 space-y-4">
+          <StatusBox tone="neutral" title="环境变量">
+            <ul className="space-y-2">
+              <li>数据源模式：{state.payload.sourceMode}</li>
+              <li>NEXT_PUBLIC_SUPABASE_URL：{labelBoolean(state.payload.env.publicUrl)}</li>
+              <li>NEXT_PUBLIC_SUPABASE_ANON_KEY：{labelBoolean(state.payload.env.anonKey)}</li>
+              <li>SUPABASE_SERVICE_ROLE_KEY：{labelBoolean(state.payload.env.serviceRoleKey)}</li>
+            </ul>
+          </StatusBox>
+
+          <StatusBox
+            tone={hasMigrationGap(state.payload.tables) ? "warning" : "success"}
+            title="迁移检查"
+          >
+            <ul className="space-y-2">
+              <li>`news_items` 表：{labelBoolean(state.payload.tables.newsItems)}</li>
+              <li>`news_items.curation_stage`：{labelBoolean(state.payload.tables.curationStage)}</li>
+              <li>`source_import_runs` 表：{labelBoolean(state.payload.tables.sourceImportRuns)}</li>
+              <li>`source_items_raw` 表：{labelBoolean(state.payload.tables.sourceItemsRaw)}</li>
+            </ul>
+          </StatusBox>
+
+          <StatusBox
+            tone={state.payload.service.error ? "error" : "success"}
+            title="服务端读取"
+          >
+            {state.payload.service.error ? (
+              state.payload.service.error
+            ) : (
+              <div className="space-y-2">
+                <p>可用于前台的公开新闻数：{state.payload.service.newsItemCount ?? 0}</p>
+                {state.payload.service.latestPublished ? (
+                  <p>
+                    最新公开新闻：{state.payload.service.latestPublished.title}（{state.payload.service.latestPublished.publishedAt}）
+                  </p>
+                ) : (
+                  <p>当前没有公开新闻数据。</p>
+                )}
+              </div>
+            )}
+          </StatusBox>
+
+          <StatusBox
+            tone={state.payload.anon.status === "ok" ? "success" : state.payload.anon.status === "empty" ? "warning" : "error"}
+            title="前台 anon 读取"
+          >
+            {state.payload.anon.status === "ok" ? (
+              <p>匿名读取正常，当前 anon 可以读到 {state.payload.anon.count ?? 0} 条公开新闻。</p>
+            ) : null}
+            {state.payload.anon.status === "empty" ? (
+              <p>匿名读取已经通了，但当前没有任何可读的公开新闻。</p>
+            ) : null}
+            {state.payload.anon.status === "error" ? (
+              <p>{state.payload.anon.error}</p>
+            ) : null}
+            {state.payload.anon.status === "skipped" ? (
+              <p>当前跳过了 anon 读取检查。</p>
+            ) : null}
+          </StatusBox>
         </div>
       ) : null}
     </article>
   );
+}
+
+function StatusBox({
+  tone,
+  title,
+  children,
+}: {
+  tone: "neutral" | "success" | "warning" | "error";
+  title: string;
+  children: React.ReactNode;
+}) {
+  const toneClass =
+    tone === "success"
+      ? "border-[rgba(35,93,58,0.18)] bg-[rgba(35,93,58,0.08)]"
+      : tone === "warning"
+        ? "border-[rgba(212,155,82,0.22)] bg-[rgba(212,155,82,0.12)]"
+        : tone === "error"
+          ? "border-[rgba(202,93,52,0.18)] bg-[var(--accent-soft)]"
+          : "border-[var(--line)] bg-white/75";
+
+  return (
+    <div className={`rounded-[22px] border p-4 text-sm leading-7 text-[var(--muted)] ${toneClass}`}>
+      <p className="font-medium text-[var(--foreground)]">{title}</p>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function labelBoolean(value: boolean) {
+  return value ? "已配置 / 存在" : "缺失";
+}
+
+function hasMigrationGap(tables: {
+  newsItems: boolean;
+  curationStage: boolean;
+  sourceImportRuns: boolean;
+  sourceItemsRaw: boolean;
+}) {
+  return !tables.newsItems || !tables.curationStage || !tables.sourceImportRuns || !tables.sourceItemsRaw;
 }
