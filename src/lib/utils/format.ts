@@ -59,7 +59,7 @@ export function labelSavedType(type: string) {
     case "case":
       return "商赛素材";
     case "content":
-      return "文章选题";
+      return "内容选题";
     case "research":
       return "行业研究";
     default:

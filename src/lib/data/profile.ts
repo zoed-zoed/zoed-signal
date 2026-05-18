@@ -111,7 +111,7 @@ function defaultProfile(): UserProfileRecord {
     displayName: "Zoed 用户",
     major: "Business",
     academicYear: "Senior",
-    careerDirection: "AI product",
+    careerDirection: "科技投资与 AI 商业趋势研究者",
     isBusinessStudent: true,
     interests: ["AI 与机器学习", "企业 SaaS", "风险投资"],
   };

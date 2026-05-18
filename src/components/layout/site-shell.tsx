@@ -2,22 +2,20 @@ import Link from "next/link";
 
 type SiteShellProps = {
   children: React.ReactNode;
-  activeNav?: "home" | "news" | "analysis" | "library" | "profile" | "admin";
+  activeNav?: "home" | "news" | "analysis" | "library" | "profile" | "subscribe" | "admin";
   showDock?: boolean;
   showAdminLink?: boolean;
 };
 
 const primaryNav = [
   { href: "/", label: "首页", key: "home" as const },
-  { href: "/#today-headlines", label: "新闻", key: "news" as const },
-  { href: "/#archive", label: "分析", key: "analysis" as const },
-  { href: "/library", label: "趋势", key: "library" as const },
+  { href: "/subscribe", label: "订阅", key: "subscribe" as const },
 ];
 
 const dockNav = [
   { href: "/", label: "首页", shortLabel: "首页", key: "home" as const, icon: HomeIcon },
-  { href: "/library", label: "素材库", shortLabel: "素材库", key: "library" as const, icon: LibraryIcon },
-  { href: "/profile", label: "个人页", shortLabel: "个人", key: "profile" as const, icon: ProfileIcon },
+  { href: "/library", label: "收藏夹", shortLabel: "收藏夹", key: "library" as const, icon: LibraryIcon },
+  { href: "/profile", label: "个人页", shortLabel: "个人页", key: "profile" as const, icon: ProfileIcon },
 ];
 
 export function SiteShell({
@@ -29,7 +27,7 @@ export function SiteShell({
   return (
     <div className="min-h-screen bg-[var(--background)] pb-32">
       <header className="page-shell pt-5 md:pt-7">
-        <div className="site-header flex items-center justify-between gap-6 rounded-[28px] px-5 py-4 md:px-7">
+        <div className="site-header flex items-center justify-between gap-4 rounded-[24px] px-5 py-4 md:px-6">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[rgba(214,164,106,0.14)] text-[var(--accent)]">
               <BrandMark />
@@ -40,38 +38,41 @@ export function SiteShell({
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-2 text-base text-[var(--muted)] md:flex">
-            {primaryNav.map((item) => {
-              const active = item.key === activeNav;
-              return (
-                <Link
-                  key={item.href}
-                  className={`rounded-full px-4 py-2.5 transition ${
-                    active
-                      ? "bg-[var(--midnight)] text-white"
-                      : "hover:bg-white hover:text-[var(--midnight)]"
-                  }`}
-                  href={item.href}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+          <div className="hidden items-center gap-3 md:flex">
+            <nav className="flex items-center gap-2 text-base text-[var(--muted)]">
+              {primaryNav.map((item) => {
+                const active = item.key === activeNav;
+                return (
+                  <Link
+                    key={item.href}
+                    className={`rounded-full px-4 py-2.5 transition ${
+                      active ? "text-[var(--midnight)]" : "hover:bg-white hover:text-[var(--midnight)]"
+                    }`}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
             <Link
-              className="rounded-full bg-[var(--midnight)] px-5 py-2.5 font-medium text-white transition hover:bg-[var(--midnight-soft)]"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--midnight)] text-white transition hover:bg-[var(--midnight-soft)]"
               href="/profile"
+              aria-label="个人页"
             >
-              订阅
+              <ProfileIcon />
             </Link>
+
             {showAdminLink ? (
               <Link
-                className="rounded-full border border-[var(--line-strong)] px-4 py-2.5 text-sm hover:bg-white"
+                className="rounded-full border border-[var(--line-strong)] px-4 py-2.5 text-sm text-[var(--midnight)] hover:bg-white"
                 href="/admin"
               >
                 管理后台
               </Link>
             ) : null}
-          </nav>
+          </div>
         </div>
       </header>
 
@@ -82,13 +83,14 @@ export function SiteShell({
           <nav className="floating-dock pointer-events-auto flex items-center gap-2 rounded-full px-3 py-3 shadow-[0_20px_40px_rgba(20,31,58,0.12)]">
             {dockNav.map((item) => {
               const active =
-                item.key === activeNav || ((activeNav === "news" || activeNav === "analysis") && item.key === "home");
+                item.key === activeNav ||
+                ((activeNav === "news" || activeNav === "analysis" || activeNav === "subscribe") && item.key === "home");
               const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-w-[110px] items-center justify-center gap-2 rounded-full px-5 py-3 text-base transition ${
+                  className={`flex min-w-[120px] items-center justify-center gap-2 rounded-full px-5 py-3 text-base transition ${
                     active
                       ? "bg-[var(--midnight)] text-white shadow-[0_12px_24px_rgba(31,46,77,0.2)]"
                       : "text-[var(--midnight)] hover:bg-[rgba(255,255,255,0.78)]"
@@ -109,7 +111,13 @@ export function SiteShell({
 function BrandMark() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M2 10H5.4L7.3 3.8L10.2 15.2L13 7.3L14.7 10H18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M2 10H5.4L7.3 3.8L10.2 15.2L13 7.3L14.7 10H18"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <circle cx="15.8" cy="4.2" r="1.4" fill="currentColor" opacity="0.9" />
       <path d="M14.9 1.5L15.4 2.7L16.7 3.2L15.4 3.7L14.9 4.9L14.4 3.7L13.2 3.2L14.4 2.7L14.9 1.5Z" fill="currentColor" opacity="0.75" />
     </svg>
@@ -135,9 +143,9 @@ function LibraryIcon() {
 
 function ProfileIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 12A4 4 0 1 0 12 4A4 4 0 0 0 12 12Z" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M5 20C5 16.9 8.1 14.5 12 14.5C15.9 14.5 19 16.9 19 20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 12A4 4 0 1 0 12 4A4 4 0 0 0 12 12Z" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M5 20C5 16.9 8.1 14.5 12 14.5C15.9 14.5 19 16.9 19 20" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }

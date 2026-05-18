@@ -29,23 +29,12 @@ export default async function BriefDetailPage({ params }: BriefDetailPageProps) 
           <span>{items.length} 条新闻</span>
         </div>
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
-          <div>
-            <h1 className="max-w-4xl text-balance text-[3.3rem] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--midnight)] md:text-[4.5rem]">
-              {brief.title}
-            </h1>
-            <p className="mt-5 max-w-3xl text-[1.2rem] leading-9 text-[var(--slate)]">{brief.intro}</p>
+        <div className="mt-6 space-y-6">
+          <h1 className="max-w-5xl text-balance text-[3.3rem] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--midnight)] md:text-[4.5rem]">
+            {brief.title}
+          </h1>
 
-            <div className="mt-7 flex flex-wrap gap-2">
-              {brief.tags.map((tag) => (
-                <span className="chip signal-chip" key={tag}>
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <article className="rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6">
+          <article className="max-w-3xl rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6">
             <p className="section-label">本期速览</p>
             <div className="mt-5 space-y-5 text-sm leading-7 text-[var(--muted)]">
               <div>
@@ -67,7 +56,7 @@ export default async function BriefDetailPage({ params }: BriefDetailPageProps) 
                 href="/library"
                 className="rounded-full bg-[var(--midnight)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--midnight-soft)]"
               >
-                去素材库整理
+                去收藏夹整理
               </Link>
               <Link
                 href="/"

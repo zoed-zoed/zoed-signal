@@ -32,16 +32,14 @@ export function BookmarkControls({ newsId, initialSavedTypes }: BookmarkControls
         return;
       }
 
-      setSaved((current) =>
-        active ? current.filter((item) => item !== bucket) : [...current, bucket],
-      );
+      setSaved((current) => (active ? current.filter((item) => item !== bucket) : [...current, bucket]));
     });
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-[var(--foreground)]">加入素材库</p>
+        <p className="text-sm font-medium text-[var(--foreground)]">加入收藏夹</p>
         {isPending ? <span className="text-xs text-[var(--muted)]">保存中...</span> : null}
       </div>
       <div className="flex flex-wrap gap-2">
