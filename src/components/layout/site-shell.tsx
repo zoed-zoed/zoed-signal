@@ -89,8 +89,8 @@ export function SiteShell({
       <main className="page-shell pt-8">{children}</main>
 
       {showDock ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
-          <nav className="floating-dock pointer-events-auto relative grid min-w-[320px] grid-cols-3 gap-2 rounded-full p-2 shadow-[0_20px_40px_rgba(20,31,58,0.12)] sm:min-w-[380px]">
+        <div className="pointer-events-none fixed left-1/2 bottom-5 z-50 w-[min(92vw,420px)] -translate-x-1/2 px-2">
+          <nav className="floating-dock pointer-events-auto relative grid w-full grid-cols-3 gap-2 rounded-full p-2 shadow-[0_20px_40px_rgba(20,31,58,0.12)]">
             <div className="pointer-events-none absolute inset-2 grid grid-cols-3 gap-2">
               <span
                 className="dock-indicator rounded-full bg-[var(--midnight)] shadow-[0_14px_28px_rgba(31,46,77,0.24)]"
