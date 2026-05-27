@@ -32,7 +32,7 @@ export default async function LibraryBucketPage({ params }: LibraryBucketPagePro
 
   return (
     <SiteShell activeNav="library">
-      <section className="rounded-[42px] border border-[var(--line)] bg-[rgba(255,255,255,0.76)] px-7 py-8 md:px-10 md:py-10">
+      <section className="fade-rise rounded-[42px] border border-[var(--line)] bg-[rgba(255,255,255,0.76)] px-7 py-8 md:px-10 md:py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 text-sm text-[var(--muted)]">
@@ -49,13 +49,13 @@ export default async function LibraryBucketPage({ params }: LibraryBucketPagePro
         </div>
       </section>
 
-      <section className="mt-8 space-y-4">
+      <section className="stagger-list mt-8 space-y-4">
         {matches.length ? (
           matches.map(({ bookmark, item }) => (
             <Link
               key={`${bookmark.newsId}-${bookmark.bucket}`}
               href={`/briefs/${item!.briefId}`}
-              className="group block rounded-[32px] border border-[var(--line-strong)] bg-white px-6 py-6 transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(32,46,77,0.06)]"
+              className="interactive-card group block rounded-[32px] border border-[var(--line-strong)] bg-white px-6 py-6"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--muted)]">
                 <div className="flex flex-wrap items-center gap-3">
@@ -64,7 +64,7 @@ export default async function LibraryBucketPage({ params }: LibraryBucketPagePro
                 </div>
                 <span>{formatDate(item!.publishedAt)}</span>
               </div>
-              <h2 className="mt-4 text-[2rem] font-semibold leading-[1.18] tracking-[-0.05em] text-[var(--midnight)]">{item!.title}</h2>
+              <h2 className="mt-4 text-[1.95rem] font-medium leading-[1.18] tracking-[-0.05em] text-[var(--midnight)]">{item!.title}</h2>
               <p className="mt-4 text-base leading-8 text-[var(--muted)]">{item!.interviewOrCaseUse}</p>
             </Link>
           ))

@@ -23,14 +23,14 @@ export default async function BriefDetailPage({ params }: BriefDetailPageProps) 
 
   return (
     <SiteShell activeNav="news">
-      <section className="rounded-[42px] border border-[var(--line)] bg-[rgba(255,255,255,0.76)] px-7 py-8 md:px-10 md:py-10">
+      <section className="fade-rise rounded-[42px] border border-[var(--line)] bg-[rgba(255,255,255,0.76)] px-7 py-8 md:px-10 md:py-10">
         <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
           <span className="signal-chip chip">{formatDate(brief.date)}</span>
           <span>{items.length} 条新闻</span>
         </div>
 
         <div className="mt-6 space-y-6">
-          <h1 className="max-w-5xl text-balance text-[3.3rem] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--midnight)] md:text-[4.5rem]">
+          <h1 className="max-w-5xl text-balance text-[3.2rem] font-semibold leading-[1.02] tracking-[-0.06em] text-[var(--midnight)] md:text-[4.3rem]">
             {brief.title}
           </h1>
 
@@ -69,7 +69,7 @@ export default async function BriefDetailPage({ params }: BriefDetailPageProps) 
         </div>
       </section>
 
-      <section className="mt-10 space-y-6">
+      <section className="stagger-list mt-10 space-y-6">
         {items.map((item) => (
           <NewsCard key={item.id} item={item} />
         ))}

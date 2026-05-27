@@ -13,9 +13,9 @@ const primaryNav = [
 ];
 
 const dockNav = [
-  { href: "/", label: "首页", shortLabel: "首页", key: "home" as const, icon: HomeIcon },
-  { href: "/library", label: "收藏夹", shortLabel: "收藏夹", key: "library" as const, icon: LibraryIcon },
-  { href: "/profile", label: "个人页", shortLabel: "个人页", key: "profile" as const, icon: ProfileIcon },
+  { href: "/", label: "首页", key: "home" as const, icon: HomeIcon },
+  { href: "/library", label: "收藏夹", key: "library" as const, icon: LibraryIcon },
+  { href: "/profile", label: "个人页", key: "profile" as const, icon: ProfileIcon },
 ];
 
 export function SiteShell({
@@ -24,31 +24,41 @@ export function SiteShell({
   showDock = true,
   showAdminLink = false,
 }: SiteShellProps) {
+  const dockActiveKey =
+    activeNav === "news" || activeNav === "analysis" || activeNav === "subscribe" ? "home" : activeNav;
+  const activeDockIndex = Math.max(
+    0,
+    dockNav.findIndex((item) => item.key === dockActiveKey),
+  );
+
   return (
     <div className="min-h-screen bg-[var(--background)] pb-32">
       <header className="page-shell pt-5 md:pt-7">
         <div className="site-header flex items-center justify-between gap-4 rounded-[24px] px-5 py-4 md:px-6">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[rgba(214,164,106,0.14)] text-[var(--accent)]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-[rgba(212,165,116,0.14)] text-[var(--accent)]">
               <BrandMark />
             </div>
             <div>
-              <p className="text-[1.95rem] font-semibold tracking-[-0.05em] text-[var(--midnight)]">Zoed-signal</p>
+              <p className="text-[1.85rem] font-semibold tracking-[-0.04em] text-[var(--midnight)]">Zoed-signal</p>
               <p className="text-sm text-[var(--muted)]">Less slop, more signal.</p>
             </div>
           </Link>
 
           <div className="hidden items-center gap-3 md:flex">
-            <nav className="flex items-center gap-2 text-base text-[var(--muted)]">
+            <nav className="flex items-center gap-2 text-sm text-[var(--muted)]">
               {primaryNav.map((item) => {
                 const active = item.key === activeNav;
                 return (
                   <Link
                     key={item.href}
-                    className={`rounded-full px-4 py-2.5 transition ${
-                      active ? "text-[var(--midnight)]" : "hover:bg-white hover:text-[var(--midnight)]"
-                    }`}
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`nav-link rounded-full px-4 py-2.5 ${
+                      active
+                        ? "bg-[rgba(31,49,86,0.06)] font-medium text-[var(--midnight)]"
+                        : "hover:bg-white hover:text-[var(--midnight)]"
+                    }`}
                   >
                     {item.label}
                   </Link>
@@ -57,19 +67,19 @@ export function SiteShell({
             </nav>
 
             <Link
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--midnight)] text-white transition hover:bg-[var(--midnight-soft)]"
               href="/profile"
               aria-label="个人页"
+              className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--midnight)] text-[var(--surface)] transition-colors duration-200 hover:bg-[var(--midnight-soft)]"
             >
               <ProfileIcon />
             </Link>
 
             {showAdminLink ? (
               <Link
-                className="rounded-full border border-[var(--line-strong)] px-4 py-2.5 text-sm text-[var(--midnight)] hover:bg-white"
                 href="/admin"
+                className="nav-link rounded-full border border-[var(--line-strong)] px-4 py-2.5 text-sm text-[var(--midnight)] hover:bg-white"
               >
-                管理后台
+                后台管理
               </Link>
             ) : null}
           </div>
@@ -80,24 +90,33 @@ export function SiteShell({
 
       {showDock ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
-          <nav className="floating-dock pointer-events-auto flex items-center gap-2 rounded-full px-3 py-3 shadow-[0_20px_40px_rgba(20,31,58,0.12)]">
+          <nav className="floating-dock pointer-events-auto relative grid min-w-[320px] grid-cols-3 gap-2 rounded-full p-2 shadow-[0_20px_40px_rgba(20,31,58,0.12)] sm:min-w-[380px]">
+            <div className="pointer-events-none absolute inset-2 grid grid-cols-3 gap-2">
+              <span
+                className="dock-indicator rounded-full bg-[var(--midnight)] shadow-[0_14px_28px_rgba(31,46,77,0.24)]"
+                style={{ gridColumn: `${activeDockIndex + 1}` }}
+              />
+            </div>
+
             {dockNav.map((item) => {
-              const active =
-                item.key === activeNav ||
-                ((activeNav === "news" || activeNav === "analysis" || activeNav === "subscribe") && item.key === "home");
+              const active = item.key === dockActiveKey;
               const Icon = item.icon;
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-w-[120px] items-center justify-center gap-2 rounded-full px-5 py-3 text-base transition ${
-                    active
-                      ? "bg-[var(--midnight)] text-white shadow-[0_12px_24px_rgba(31,46,77,0.2)]"
-                      : "text-[var(--midnight)] hover:bg-[rgba(255,255,255,0.78)]"
+                  aria-current={active ? "page" : undefined}
+                  className={`dock-link relative z-10 flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-full px-4 py-3 text-center ${
+                    active ? "text-[var(--surface)]" : "text-[var(--midnight)]"
                   }`}
                 >
-                  <Icon />
-                  <span>{item.shortLabel}</span>
+                  <span className={active ? "text-[var(--surface)]" : "text-[var(--midnight)]"}>
+                    <Icon />
+                  </span>
+                  <span className={`text-[0.98rem] ${active ? "font-medium text-[var(--surface)]" : "text-[var(--midnight)]"}`}>
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}

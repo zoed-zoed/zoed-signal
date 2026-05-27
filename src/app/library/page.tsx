@@ -14,7 +14,7 @@ export default async function LibraryPage() {
 
   return (
     <SiteShell activeNav="library">
-      <section className="flex items-center justify-between gap-4">
+      <section className="fade-rise flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <span className="section-icon">
             <LibraryHeaderIcon />
@@ -26,7 +26,7 @@ export default async function LibraryPage() {
         </div>
       </section>
 
-      <section className="mt-10 grid gap-5 lg:grid-cols-2">
+      <section className="stagger-list mt-10 grid gap-5 lg:grid-cols-2">
         {buckets.map((bucket) => {
           const matches = bookmarks
             .filter((bookmark) => bookmark.bucket === bucket)
@@ -43,11 +43,11 @@ export default async function LibraryPage() {
             <Link
               key={bucket}
               href={`/library/${bucket}`}
-              className="group rounded-[34px] border border-[var(--line-strong)] bg-[rgba(255,255,255,0.78)] p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(32,46,77,0.08)]"
+              className="interactive-card group rounded-[34px] border border-[var(--line-strong)] bg-[rgba(255,255,255,0.78)] p-6"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-[2rem] font-semibold tracking-[-0.05em] text-[var(--midnight)]">{labelSavedType(bucket)}</h2>
+                  <h2 className="text-[1.9rem] font-medium tracking-[-0.05em] text-[var(--midnight)]">{labelSavedType(bucket)}</h2>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm text-[var(--muted)]">
                     <span>{matches.length} 条收藏</span>
                     <span>{latestBookmark ? `最近更新于 ${formatDate(latestBookmark.createdAt)}` : "还没有内容"}</span>
@@ -63,12 +63,12 @@ export default async function LibraryPage() {
                       <div className="flex items-center gap-3 text-sm text-[var(--muted)]">
                         <span className="rounded-full bg-[var(--sage-soft)] px-3 py-1 text-[var(--success)]">{item!.category}</span>
                       </div>
-                      <h3 className="mt-3 text-[1.45rem] font-semibold leading-[1.25] text-[var(--midnight)]">{item!.title}</h3>
+                      <h3 className="mt-3 text-[1.4rem] font-medium leading-[1.28] text-[var(--midnight)]">{item!.title}</h3>
                     </div>
                   ))
                 ) : (
                   <div className="rounded-[22px] border border-dashed border-[var(--line)] bg-[rgba(255,255,255,0.58)] px-4 py-5 text-sm leading-7 text-[var(--muted)]">
-                    这个分类里还没有内容。去简报详情里点一下收藏，这里就会开始出现可复用的新闻素材。
+                    这个分类里还没有内容。去任意一篇简报里点一下收藏，这里就会开始出现可复用的新闻素材。
                   </div>
                 )}
               </div>

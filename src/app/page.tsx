@@ -30,28 +30,30 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   return (
     <SiteShell activeNav="home">
-      <section className="relative overflow-hidden rounded-[44px] border border-[var(--line)] bg-[rgba(255,255,255,0.58)] px-7 py-9 shadow-[0_28px_80px_rgba(32,46,77,0.06)] md:px-12 md:py-14">
+      <section className="fade-rise relative overflow-hidden rounded-[44px] border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-7 py-9 shadow-[0_28px_80px_rgba(32,46,77,0.06)] md:px-12 md:py-14">
         <div className="hero-orbit left-[-80px] top-16 h-[220px] w-[220px]" />
         <div className="hero-orbit right-[-30px] top-10 h-[180px] w-[180px]" />
 
         <div className="relative">
           <span className="signal-chip chip">每日简报 · {todayLabel}</span>
-          <h1 className="mt-8 max-w-5xl text-balance text-[3.6rem] font-semibold leading-[0.94] tracking-[-0.07em] text-[var(--midnight)] md:text-[6rem]">
+          <h1 className="mt-8 max-w-5xl text-balance text-[3.45rem] font-semibold leading-[0.95] tracking-[-0.07em] text-[var(--midnight)] md:text-[5.7rem]">
             科技商业新闻，
             <br />
             为清晰决策而筛选
           </h1>
-          <p className="mt-7 max-w-4xl text-[1.4rem] leading-[1.8] text-[var(--slate)]">
-            将 AI、科技与商业信号提炼为聚焦的每日洞察。实时跟踪真正值得继续追踪的公司动作、市场变化与职业线索。
+          <p className="mt-5 max-w-2xl text-[0.98rem] leading-[1.85] text-[var(--slate)] md:text-[1.04rem]">
+            将 AI、科技与商业信号提炼成聚焦的每日洞察，帮你更快看清值得继续跟进的公司动作、市场变化与职业线索。
           </p>
         </div>
       </section>
 
-      <section className="mt-12 rounded-[36px] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] px-7 py-7 md:px-8">
+      <section className="fade-rise mt-12 rounded-[36px] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] px-7 py-7 md:px-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="section-label">本期你会看到什么</p>
-            <h2 className="mt-3 text-[2.35rem] font-semibold tracking-[-0.05em] text-[var(--midnight)]">从编辑部角度筛出来的 3 条重点信号</h2>
+            <h2 className="mt-3 max-w-3xl text-[2.05rem] font-medium tracking-[-0.04em] text-[var(--midnight)] md:text-[2.25rem]">
+              从编辑部视角筛出的 3 条重点信号
+            </h2>
           </div>
           {latestBrief ? (
             <Link
@@ -64,22 +66,22 @@ export default async function Home({ searchParams }: HomePageProps) {
           ) : null}
         </div>
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-3">
+        <div className="stagger-list mt-6 grid gap-5 lg:grid-cols-3">
           {currentSignals.length ? (
             currentSignals.map((item) => (
               <Link
                 key={item.id}
                 href={`/briefs/${item.briefId}`}
-                className="group rounded-[30px] border border-[var(--line-strong)] bg-white px-6 py-6 transition hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(32,46,77,0.08)]"
+                className="interactive-card group rounded-[24px] border border-[var(--line-strong)] bg-white px-6 py-6"
               >
                 <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
                   <span>{formatRelativeHours(item.publishedAt)}</span>
                   <span className="rounded-full bg-[var(--sage-soft)] px-3 py-1 font-medium text-[var(--success)]">{item.category}</span>
                 </div>
-                <h3 className="mt-5 text-[2rem] font-semibold leading-[1.15] tracking-[-0.05em] text-[var(--midnight)]">
+                <h3 className="mt-5 text-[1.62rem] font-medium leading-[1.32] tracking-[-0.03em] text-[var(--midnight)]">
                   {item.title}
                 </h3>
-                <p className="mt-4 line-clamp-3 text-base leading-8 text-[var(--muted)]">{item.whatHappened}</p>
+                <p className="mt-4 line-clamp-3 text-[0.94rem] leading-7 text-[var(--muted)]">{item.whatHappened}</p>
               </Link>
             ))
           ) : (
@@ -90,13 +92,13 @@ export default async function Home({ searchParams }: HomePageProps) {
         </div>
       </section>
 
-      <section id="today-headlines" className="mt-16">
+      <section id="today-headlines" className="fade-rise mt-16">
         <div className="mb-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="section-icon">
               <HeadlineIcon />
             </span>
-            <h2 className="text-[3rem] font-semibold tracking-[-0.06em] text-[var(--midnight)]">今日头条</h2>
+            <h2 className="text-[2.6rem] font-medium tracking-[-0.05em] text-[var(--midnight)]">今日头条</h2>
           </div>
           <div className="hidden items-center gap-3 text-sm text-[var(--muted)] md:flex">
             <span className="inline-flex items-center gap-2">
@@ -106,40 +108,38 @@ export default async function Home({ searchParams }: HomePageProps) {
           </div>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="stagger-list grid gap-5 lg:grid-cols-3">
           {currentSignals.map((item) => (
             <Link
               key={item.id}
               href={`/briefs/${item.briefId}`}
-              className="group rounded-[32px] border border-[var(--line-strong)] bg-white px-7 py-7 transition hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(32,46,77,0.08)]"
+              className="interactive-card group rounded-[24px] border border-[var(--line-strong)] bg-white px-7 py-7"
             >
               <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
                 <span className="rounded-full bg-[var(--sage)] px-3 py-1 font-medium text-white">{item.category}</span>
                 <span>{formatRelativeHours(item.publishedAt)}</span>
               </div>
-              <h3 className="mt-6 text-[2.15rem] font-semibold leading-[1.14] tracking-[-0.05em] text-[var(--midnight)]">
-                {item.title}
-              </h3>
-              <p className="mt-4 line-clamp-3 text-base leading-8 text-[var(--muted)]">{item.whatHappened}</p>
+              <h3 className="mt-6 text-[1.8rem] font-medium leading-[1.28] tracking-[-0.03em] text-[var(--midnight)]">{item.title}</h3>
+              <p className="mt-4 line-clamp-3 text-[0.94rem] leading-7 text-[var(--muted)]">{item.whatHappened}</p>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="mt-16">
+      <section className="fade-rise mt-16">
         <div className="mb-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="section-icon">
               <ArchiveIcon />
             </span>
-            <h2 className="text-[3rem] font-semibold tracking-[-0.06em] text-[var(--midnight)]">简报归档</h2>
+            <h2 className="text-[2.6rem] font-medium tracking-[-0.05em] text-[var(--midnight)]">简报归档</h2>
           </div>
 
           <div className="rounded-full border border-[var(--line-strong)] bg-[rgba(255,255,255,0.85)] p-1">
             <div className="flex items-center gap-1 text-sm">
               <Link
                 href="/?order=desc#archive"
-                className={`rounded-full px-4 py-2.5 transition ${
+                className={`nav-link rounded-full px-4 py-2.5 ${
                   sortOrder === "desc" ? "bg-[var(--midnight)] text-white" : "text-[var(--muted)] hover:text-[var(--midnight)]"
                 }`}
               >
@@ -147,7 +147,7 @@ export default async function Home({ searchParams }: HomePageProps) {
               </Link>
               <Link
                 href="/?order=asc#archive"
-                className={`rounded-full px-4 py-2.5 transition ${
+                className={`nav-link rounded-full px-4 py-2.5 ${
                   sortOrder === "asc" ? "bg-[var(--midnight)] text-white" : "text-[var(--muted)] hover:text-[var(--midnight)]"
                 }`}
               >
@@ -157,7 +157,7 @@ export default async function Home({ searchParams }: HomePageProps) {
           </div>
         </div>
 
-        <div id="archive" className="grid gap-5">
+        <div id="archive" className="stagger-list grid gap-5">
           {displayBriefs.map((brief) => (
             <BriefCard key={brief.id} brief={brief} newsCount={newsCountByBrief.get(brief.id) ?? 0} />
           ))}
