@@ -89,7 +89,10 @@ export function SiteShell({
       <main className="page-shell pt-8">{children}</main>
 
       {showDock ? (
-        <div className="pointer-events-none fixed left-1/2 bottom-5 z-50 w-[min(92vw,420px)] -translate-x-1/2 px-2">
+        <div
+          className="pointer-events-none fixed left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 px-2"
+          style={{ top: "min(calc(100vh - 112px), 72vh)" }}
+        >
           <nav className="floating-dock pointer-events-auto relative grid w-full grid-cols-3 gap-2 rounded-full p-2 shadow-[0_20px_40px_rgba(20,31,58,0.12)]">
             <div className="pointer-events-none absolute inset-2 grid grid-cols-3 gap-2">
               <span
